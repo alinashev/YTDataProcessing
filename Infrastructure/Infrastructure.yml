@@ -2,7 +2,7 @@ Parameters:
     BucketName:
         Type: String
         Description: S3 Bucket name
-  
+
     S3EventQueueName:
         Description: SQS Queue name
         Type: String
@@ -117,10 +117,10 @@ Resources:
     Layer:
         Type: AWS::Lambda::LayerVersion
         Properties:
-            LayerName: googleAPI
+            LayerName: google-api-python-client
             Content: 
-                S3Bucket: task-bucket-a
-                S3Key: python.zip
+                S3Bucket: a-tech-bucket
+                S3Key: google-api-python-client.zip
             CompatibleRuntimes:
                 - python3.9
                 
