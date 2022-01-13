@@ -8,17 +8,21 @@ Parameters:
         Type: String
         
     ChannelSenderLambdaFunctionName:
-        Description: S3 Lambda name
+        Description: Lambda function name
         Type: String
         
     ChannelPullerLambdaFunctionName:
-        Description: S3 Lambda name
+        Description: Lambda function name
         Type: String
         
     LambdaTriggerQueueName:
-        Description: S3 Lambda name
+        Description: Lambda trigger name
         Type: String
-        
+
+    LambdaRoleName:
+        Description: Lambda trigger name
+        Type: String
+
     DatabaseName:
         Type: String
     
@@ -66,7 +70,7 @@ Resources:
     Role:
         Type: AWS::IAM::Role
         Properties:
-            RoleName: A-LambdaFullAcces
+            RoleName: !Ref LambdaRoleName
             AssumeRolePolicyDocument:
                 Version: "2012-10-17"
                 Statement:
