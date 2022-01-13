@@ -120,7 +120,7 @@ Resources:
             LayerName: google-api-python-client
             Content: 
                 S3Bucket: a-tech-bucket
-                S3Key: google-api-python-client.zip
+                S3Key: Layers/google-api-python-client.zip
             CompatibleRuntimes:
                 - python3.9
                 
