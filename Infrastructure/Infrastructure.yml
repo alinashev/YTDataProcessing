@@ -16,14 +16,15 @@ Parameters:
         Type: String
         
     LambdaTriggerQueueName:
-        Description: Lambda trigger name
+        Description: Lambda trigger queue name
         Type: String
 
     LambdaRoleName:
-        Description: Lambda trigger name
+        Description: Lambda role name
         Type: String
 
     DatabaseName:
+        Description: Database name
         Type: String
     
 Resources:
