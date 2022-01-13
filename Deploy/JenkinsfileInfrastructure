@@ -17,7 +17,7 @@ pipeline {
                        ParameterKey=ChannelPullerLambdaFunctionName,ParameterValue=A-test-pull-01 \
                        ParameterKey=LambdaRoleName,ParameterValue=A-test-lambda-role-01 \
                        ParameterKey=LambdaTriggerQueueName,ParameterValue=A-test-trigger-01 \
-                       ParameterKey=DatabaseName,ParameterValue=A-test-db-01 \
+                       ParameterKey=DatabaseName,ParameterValue=a-test-db-01 \
                     '''
                 }
               }
