@@ -1,0 +1,168 @@
+Parameters:
+    BucketName:
+        Type: String
+        Description: S3 Bucket name
+  
+    S3EventQueueName:
+        Description: SQS Queue name
+        Type: String
+        
+    ChannelSenderLambdaFunctionName:
+        Description: S3 Lambda name
+        Type: String
+        
+    ChannelPullerLambdaFunctionName:
+        Description: S3 Lambda name
+        Type: String
+        
+    LambdaTriggerQueueName:
+        Description: S3 Lambda name
+        Type: String
+        
+    DatabaseName:
+        Type: String
+    
+Resources:
+    S3Bucket:
+        Type: AWS::S3::Bucket
+        DependsOn:
+              - S3EventQueue
+              - QueuePolicy
+        Properties:
+                  BucketName: !Ref BucketName
+                  NotificationConfiguration:
+                        QueueConfigurations:
+                        - Event: 's3:ObjectCreated:Put'
+                          Queue: !Join [ ":", [ "arn:aws:sqs", !Ref "AWS::Region" , !Ref "AWS::AccountId", !Ref S3EventQueueName ] ]
+    QueuePolicy:
+        Type: AWS::SQS::QueuePolicy
+        DependsOn: S3EventQueue
+        Properties:
+            PolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          AWS: '*'
+                      Action:
+                          - SQS:SendMessage
+                      Resource: !Join [ ":", [ "arn:aws:sqs", !Ref "AWS::Region" , !Ref "AWS::AccountId", !Ref S3EventQueueName ] ]
+                      Condition:
+                          ArnLike:
+                            aws:SourceArn: !Join [ "", ["arn:aws:s3:*:*:", !Ref BucketName ] ]
+            Queues:
+                - !Ref S3EventQueue
+
+    S3EventQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            DelaySeconds: 0
+            MaximumMessageSize: 262144
+            MessageRetentionPeriod: 864000
+            QueueName: !Ref S3EventQueueName
+            ReceiveMessageWaitTimeSeconds: 0
+            VisibilityTimeout: 60
+    
+    Role:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: A-LambdaFullAcces
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                      - Effect: Allow
+                        Principal:
+                              Service:
+                                - lambda.amazonaws.com
+                        Action:
+                            - 'sts:AssumeRole'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+                
+    ChannelSenderLambdaFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: !Ref ChannelSenderLambdaFunctionName
+            Code:
+                S3Bucket: task-bucket-a
+                S3Key: A-sender/index.zip
+            Handler: index.lambda_handler
+            MemorySize: 128
+            Role: !GetAtt Role.Arn    
+            Runtime: python3.9
+            Timeout: 60
+    
+    ChannelPullerLambdaFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: !Ref ChannelPullerLambdaFunctionName
+            Handler: index.lambda_handler
+            Role: !GetAtt Role.Arn
+            Code:
+                S3Bucket: task-bucket-a
+                S3Key: A-puller/index.zip
+            Timeout: 60
+            MemorySize: 128
+            Runtime: python3.9
+            Layers: 
+                - !Ref Layer
+    
+    Layer:
+        Type: AWS::Lambda::LayerVersion
+        Properties:
+            LayerName: googleAPI
+            Content: 
+                S3Bucket: task-bucket-a
+                S3Key: python.zip
+            CompatibleRuntimes:
+                - python3.9
+                
+    LambdaFunctionEventSourceMapping:
+        Type: AWS::Lambda::EventSourceMapping
+        Properties:
+            BatchSize: 1
+            Enabled: true
+            EventSourceArn: !GetAtt LambdaTriggerQueue.Arn
+            FunctionName: !GetAtt ChannelPullerLambdaFunction.Arn
+
+    LambdaTriggerQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Ref LambdaTriggerQueueName
+            DelaySeconds: 0
+            VisibilityTimeout: 60
+            
+    LambdaFunctionSchedule:
+        Type: AWS::Events::Rule
+        Properties:
+            State: ENABLED
+            ScheduleExpression: rate(1 day)
+            Targets:
+            - Arn:
+                  Fn::GetAtt:
+                  - ChannelSenderLambdaFunction
+                  - Arn
+              Id: LambdaFunctionCwPermission
+
+    LambdaFunctionCwPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            Action: lambda:InvokeFunction
+            FunctionName:
+                Fn::GetAtt:
+                - ChannelSenderLambdaFunction
+                - Arn
+            Principal: events.amazonaws.com
+            SourceArn:
+                Fn::GetAtt:
+                - LambdaFunctionSchedule
+                - Arn
+    
+    MyAthenaDataBase:
+        Type: AWS::Glue::Database
+        Properties:
+            CatalogId: !Ref "AWS::AccountId" 
+            DatabaseInput: 
+                Name: !Ref DatabaseName
