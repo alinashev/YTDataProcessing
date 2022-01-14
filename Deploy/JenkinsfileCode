@@ -18,6 +18,8 @@ pipeline {
 
                     cd ..
                     cd LambdaPuller && zip -r9 index.zip .
+                    aws s3 cp s3://a-tech-bucket/Google-API-key/keys.py .
+                    zip index.zip keys.py
                     aws s3 cp index.zip s3://a-tech-bucket/LambdaPullerCode/index.zip
                     rm index.zip
 
