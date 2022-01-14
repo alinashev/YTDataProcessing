@@ -1,13 +1,13 @@
 pipeline {
     agent any
     stages {
-        stage('Submit Stack') {
+        stage('Submit Lambda Code') {
             steps {
                 withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
                 {
                 sh  '''
-                    cd LambdaPuller && zip -r9 index.zip .
-                    aws s3 cp index.zip s3://a-tech-bucket/LambdaPullerCode/index.zip
+                    cd LambdaSender && zip -r9 index.zip .
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaSenderCode/index.zip
                     rm index.zip
 
                     aws lambda update-function-code \
@@ -17,8 +17,8 @@ pipeline {
                       --s3-key LambdaSenderCode/index.zip
 
                     cd ..
-                    cd LambdaSender && zip -r9 index.zip .
-                    aws s3 cp index.zip s3://a-tech-bucket/LambdaSenderCode/index.zip
+                    cd LambdaPuller && zip -r9 index.zip .
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaPullerCode/index.zip
                     rm index.zip
 
                     aws lambda update-function-code \
