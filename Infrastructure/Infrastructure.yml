@@ -91,8 +91,11 @@ Resources:
         Properties:
             FunctionName: !Ref ChannelSenderLambdaFunctionName
             Code:
-                S3Bucket: task-bucket-a
-                S3Key: A-sender/index.zip
+                S3Bucket: a-tech-bucket
+                S3Key: Default/index.zip
+            Environment:
+                Variables:
+                    LambdaTriggerQueueName: !Ref LambdaTriggerQueueName
             Handler: index.lambda_handler
             MemorySize: 128
             Role: !GetAtt Role.Arn    
@@ -106,8 +109,11 @@ Resources:
             Handler: index.lambda_handler
             Role: !GetAtt Role.Arn
             Code:
-                S3Bucket: task-bucket-a
-                S3Key: A-puller/index.zip
+                S3Bucket: a-tech-bucket
+                S3Key: Default/index.zip
+            Environment:
+                Variables:
+                    BucketName: !Ref BucketName
             Timeout: 60
             MemorySize: 128
             Runtime: python3.9
