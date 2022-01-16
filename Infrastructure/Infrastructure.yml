@@ -127,6 +127,8 @@ Resources:
             Content: 
                 S3Bucket: a-tech-bucket
                 S3Key: Layers/google-api-python-client.zip
+            CompatibleArchitectures:
+                - x86_64
             CompatibleRuntimes:
                 - python3.9
                 - python3.8
