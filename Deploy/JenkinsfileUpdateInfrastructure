@@ -1,0 +1,42 @@
+
+pipeline {
+    agent any
+    stages {
+        stage('Create Change-Set') {
+            steps {
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh '''
+                    aws cloudformation create-change-set \
+                      --change-set-name update-name1 \
+                      --stack-name a-test-stack \
+                      --template-body file://Infrastructure/Infrastructure.yml \
+                      --region 'us-east-2' \
+                      --capabilities CAPABILITY_NAMED_IAM \
+                      --parameters \
+                       ParameterKey=BucketName,ParameterValue=a-test-01-bucket \
+                       ParameterKey=S3EventQueueName,ParameterValue=A-test-01qs3 \
+                       ParameterKey=ChannelSenderLambdaFunctionName,ParameterValue=A-test-send-01 \
+                       ParameterKey=ChannelPullerLambdaFunctionName,ParameterValue=A-test-pull-01 \
+                       ParameterKey=LambdaRoleName,ParameterValue=A-test-lambda-role-01 \
+                       ParameterKey=LambdaTriggerQueueName,ParameterValue=A-test-trigger-01 \
+                       ParameterKey=DatabaseName,ParameterValue=a-test-db-01 \
+                    '''
+                }
+              }
+             }
+            stage('Execute Change-Set') {
+            steps {
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh '''
+                    aws cloudformation execute-change-set \
+                      --change-set-name update-name1 \
+                      --stack-name a-test-stack \
+                      --region 'us-east-2'
+                    '''
+                }
+              }
+             }
+           }
+         }
