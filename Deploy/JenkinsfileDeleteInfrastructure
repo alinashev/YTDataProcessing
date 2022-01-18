@@ -13,5 +13,17 @@ pipeline {
                 }
               }
              }
+            stage('Stack delete complete'){
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                    {
+                    sh '''
+                        aws cloudformation wait stack-delete-complete \
+                          --stack-name a-test-stack \
+                          --region 'us-east-2'
+                        '''
+                    }
+                }
+            }
            }
          }
