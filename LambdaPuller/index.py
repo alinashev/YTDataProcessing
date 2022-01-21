@@ -11,7 +11,7 @@ from Transform.VideoIDParser import VideoIDParser
 def lambda_handler(event, context):
     channel = (event['Records'][0]['body'])
 
-    folder_name = str(datetime.now().date()) + "-" + \
+    folder_name = str(datetime.now().date()) + "/" + \
                   str(datetime.now().hour) + "h"
 
     name = channel.split()[0]
