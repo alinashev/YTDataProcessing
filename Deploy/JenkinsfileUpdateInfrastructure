@@ -10,7 +10,7 @@ pipeline {
                     aws cloudformation create-change-set \
                       --change-set-name update-name1 \
                       --stack-name a-test-stack \
-                      --template-body file://Infrastructure/Infrastructure.yml \
+                      --template-body file://Infrastructure/InfrastructureInStateMachine.yml \
                       --region 'us-east-2' \
                       --capabilities CAPABILITY_NAMED_IAM \
                       --parameters \
