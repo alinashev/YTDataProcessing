@@ -27,6 +27,15 @@ Parameters:
         Description: Database name
         Type: String
 
+    TransformerLambdaFunctionName:
+        Description: Lambda-transformer function name
+        Type: String
+
+    TransformerTriggerQueueName:
+        Description: Transformer queue name
+        Type: String
+
+
 # IAM role for the Step Functions State Machine
 Resources:
     StateMachineIAMRole:
@@ -54,7 +63,7 @@ Resources:
                     Resource:
                       - !GetAtt ChannelSenderLambdaFunction.Arn
                       - !GetAtt ChannelPullerLambdaFunction.Arn
-    
+
     StateMachine:
         Type: AWS::StepFunctions::StateMachine
         Properties:
@@ -86,7 +95,7 @@ Resources:
               - '   }'
               - ' }'
               - '}'
-              
+
     ScheduledEventIAMRole:
         Type: AWS::IAM::Role
         Properties:
@@ -111,7 +120,7 @@ Resources:
                     Action: "states:StartExecution"
                     Resource:
                       - !Ref StateMachine
-    
+
     ScheduledEventRule:
         Type: "AWS::Events::Rule"
         Properties:
@@ -124,7 +133,7 @@ Resources:
                   - Arn
               Id: !GetAtt StateMachine.Name
               RoleArn: !GetAtt ScheduledEventIAMRole.Arn
-  
+
     Role:
         Type: AWS::IAM::Role
         Properties:
@@ -142,7 +151,7 @@ Resources:
                 - arn:aws:iam::aws:policy/AmazonSQSFullAccess
                 - arn:aws:iam::aws:policy/AmazonS3FullAccess
                 - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
-                
+
     ChannelSenderLambdaFunction:
         Type: AWS::Lambda::Function
         Properties:
@@ -155,10 +164,10 @@ Resources:
                     LambdaTriggerQueueName: !Ref LambdaTriggerQueueName
             Handler: index.lambda_handler
             MemorySize: 128
-            Role: !GetAtt Role.Arn    
+            Role: !GetAtt Role.Arn
             Runtime: python3.9
             Timeout: 60
-    
+
     ChannelPullerLambdaFunction:
         Type: AWS::Lambda::Function
         Properties:
@@ -174,14 +183,34 @@ Resources:
             Timeout: 60
             MemorySize: 128
             Runtime: python3.9
-            Layers: 
+            Layers:
                 - !Ref Layer
-    
+
+    TransformerLambdaFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: !Ref TransformerLambdaFunctionName
+            Handler: index.lambda_handler
+            Role: !GetAtt Role.Arn
+            Code:
+                S3Bucket: a-tech-bucket
+                S3Key: Default/index.zip
+            Environment:
+                Variables:
+                    BucketName: !Ref BucketName
+                    LambdaTransformerTriggerQueue: !Ref LambdaTransformerTriggerQueueName
+                    DatabaseName: !Ref DatabaseName
+            Timeout: 120
+            MemorySize: 128
+            Runtime: python3.9
+            Layers:
+                - !Ref Layer
+
     Layer:
         Type: AWS::Lambda::LayerVersion
         Properties:
             LayerName: google-api-python-client
-            Content: 
+            Content:
                 S3Bucket: a-tech-bucket
                 S3Key: Layers/python.zip
             CompatibleArchitectures:
@@ -230,7 +259,7 @@ Resources:
             QueueName: !Ref S3EventQueueName
             ReceiveMessageWaitTimeSeconds: 0
             VisibilityTimeout: 60
-    
+
     LambdaFunctionEventSourceMapping:
         Type: AWS::Lambda::EventSourceMapping
         Properties:
@@ -238,14 +267,29 @@ Resources:
             Enabled: true
             EventSourceArn: !GetAtt LambdaTriggerQueue.Arn
             FunctionName: !GetAtt ChannelPullerLambdaFunction.Arn
-        
+
+    LambdaFunctionTransformerEventSourceMapping:
+        Type: AWS::Lambda::EventSourceMapping
+        Properties:
+            BatchSize: 1
+            Enabled: true
+            EventSourceArn: !GetAtt TransformerTriggerQueue.Arn
+            FunctionName: !GetAtt TransformerLambdaFunction.Arn
+
     LambdaTriggerQueue:
         Type: AWS::SQS::Queue
         Properties:
             QueueName: !Ref LambdaTriggerQueueName
             DelaySeconds: 0
             VisibilityTimeout: 60
-    
+
+    TransformerTriggerQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Ref TransformerTriggerQueueName
+            DelaySeconds: 0
+            VisibilityTimeout: 120
+
     MyAthenaDataBase:
         Type: AWS::Glue::Database
         Properties:
