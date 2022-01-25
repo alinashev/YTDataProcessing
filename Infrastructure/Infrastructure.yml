@@ -122,7 +122,7 @@ Resources:
             Environment:
                 Variables:
                     BucketName: !Ref BucketName
-                    LambdaTransformerTriggerQueueName: !Ref LambdaTransformerTriggerQueueName
+                    TransformerTriggerQueueName: !Ref TransformerTriggerQueueName
             Timeout: 60
             MemorySize: 128
             Runtime: python3.9
