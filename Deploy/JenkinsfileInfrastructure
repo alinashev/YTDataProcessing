@@ -19,7 +19,7 @@ pipeline {
                        ParameterKey=LambdaTriggerQueueName,ParameterValue=A-puller-trigger-25 \
                        ParameterKey=DatabaseName,ParameterValue=a-test-db-25 \
                        ParameterKey=TransformerLambdaFunctionName,ParameterValue=A-transform-25 \
-                       ParameterKey=TransformerLambdaFunctionName,ParameterValue=a-transform-trigger-25 \
+                       ParameterKey=TransformerTriggerQueueName,ParameterValue=a-transform-trigger-25 \
                     '''
                 }
               }
