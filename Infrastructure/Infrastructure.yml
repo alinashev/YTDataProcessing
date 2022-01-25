@@ -26,6 +26,14 @@ Parameters:
     DatabaseName:
         Description: Database name
         Type: String
+
+    TransformerLambdaFunctionName:
+        Description: Lambda-transformer function name
+        Type: String
+
+    TransformerTriggerQueueName:
+        Description: Transformer queue name
+        Type: String
     
 Resources:
     S3Bucket:
@@ -114,12 +122,32 @@ Resources:
             Environment:
                 Variables:
                     BucketName: !Ref BucketName
+                    LambdaTransformerTriggerQueueName: !Ref LambdaTransformerTriggerQueueName
             Timeout: 60
             MemorySize: 128
             Runtime: python3.9
             Layers: 
                 - !Ref Layer
-    
+
+    TransformerLambdaFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: !Ref TransformerLambdaFunctionName
+            Handler: index.lambda_handler
+            Role: !GetAtt Role.Arn
+            Code:
+                S3Bucket: a-tech-bucket
+                S3Key: Default/index.zip
+            Environment:
+                Variables:
+                    BucketName: !Ref BucketName
+                    DatabaseName: !Ref DatabaseName
+            Timeout: 120
+            MemorySize: 128
+            Runtime: python3.9
+            Layers:
+                - !Ref Layer
+
     Layer:
         Type: AWS::Lambda::LayerVersion
         Properties:
@@ -175,7 +203,22 @@ Resources:
                 Fn::GetAtt:
                 - LambdaFunctionSchedule
                 - Arn
-    
+
+    LambdaFunctionTransformerEventSourceMapping:
+        Type: AWS::Lambda::EventSourceMapping
+        Properties:
+            BatchSize: 1
+            Enabled: true
+            EventSourceArn: !GetAtt TransformerTriggerQueue.Arn
+            FunctionName: !GetAtt TransformerLambdaFunction.Arn
+
+    TransformerTriggerQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: !Ref TransformerTriggerQueueName
+            DelaySeconds: 0
+            VisibilityTimeout: 120
+
     MyAthenaDataBase:
         Type: AWS::Glue::Database
         Properties:
