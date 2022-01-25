@@ -27,15 +27,6 @@ Parameters:
         Description: Database name
         Type: String
 
-    TransformerLambdaFunctionName:
-        Description: Lambda-transformer function name
-        Type: String
-
-    TransformerTriggerQueueName:
-        Description: Transformer queue name
-        Type: String
-
-
 # IAM role for the Step Functions State Machine
 Resources:
     StateMachineIAMRole:
@@ -189,7 +180,7 @@ Resources:
     TransformerLambdaFunction:
         Type: AWS::Lambda::Function
         Properties:
-            FunctionName: !Ref TransformerLambdaFunctionName
+            FunctionName: a-transform-01
             Handler: index.lambda_handler
             Role: !GetAtt Role.Arn
             Code:
@@ -286,7 +277,7 @@ Resources:
     TransformerTriggerQueue:
         Type: AWS::SQS::Queue
         Properties:
-            QueueName: !Ref TransformerTriggerQueueName
+            QueueName: a-transform-queue
             DelaySeconds: 0
             VisibilityTimeout: 120
 
