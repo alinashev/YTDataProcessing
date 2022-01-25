@@ -189,7 +189,7 @@ Resources:
             Environment:
                 Variables:
                     BucketName: !Ref BucketName
-                    LambdaTransformerTriggerQueue: !Ref LambdaTransformerTriggerQueueName
+                    LambdaTransformerTriggerQueue: a-transform-queue
                     DatabaseName: !Ref DatabaseName
             Timeout: 120
             MemorySize: 128
