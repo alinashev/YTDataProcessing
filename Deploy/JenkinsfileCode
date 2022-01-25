@@ -11,7 +11,7 @@ pipeline {
                     rm index.zip
 
                     aws lambda update-function-code \
-                      --function-name A-test-send-01\
+                      --function-name A-test-send-25\
                       --region us-east-2 \
                       --s3-bucket a-tech-bucket\
                       --s3-key LambdaSenderCode/index.zip
@@ -24,7 +24,7 @@ pipeline {
                     rm index.zip
 
                     aws lambda update-function-code \
-                      --function-name A-test-pull-01\
+                      --function-name A-test-pull-25\
                       --region us-east-2 \
                       --s3-bucket a-tech-bucket\
                       --s3-key LambdaPullerCode/index.zip
