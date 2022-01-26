@@ -8,6 +8,6 @@ def lambda_handler(event, context):
     service: ServiceSQS = ServiceSQS()
     channel_id: list = ChannelsID('channels.txt').get_channels_id()
     for channel in channel_id:
-        service.send_message(channel, queue_name=os.environ.get("LambdaTriggerQueueName"))
+        service.send_message(channel, os.environ.get("QueuePullerTriggerName"))
 
     return "Successfully completed"

@@ -50,5 +50,5 @@ def lambda_handler(event, context):
     storage.upload(file_writer_category.get_path(), "Resources/" + folder_name + "/" + "categoryData")
 
     service: ServiceSQS = ServiceSQS()
-    service.send_message(future_message, queue_name=os.environ.get("TransformerTriggerQueueName"))
+    service.send_message(future_message, os.environ.get("QueueTransformerTriggerName"))
     return "Successfully completed"
