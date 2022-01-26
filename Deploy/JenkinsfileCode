@@ -28,6 +28,17 @@ pipeline {
                       --region us-east-2 \
                       --s3-bucket a-tech-bucket\
                       --s3-key LambdaPullerCode/index.zip
+
+                    cd ..
+                    cd LambdaTransformer && zip -r9 index.zip .
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaTransformerCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name A-test-transform-25\
+                      --region us-east-2 \
+                      --s3-bucket a-tech-bucket\
+                      --s3-key LambdaTransformerCode/index.zip
                     '''
                 }
               }
