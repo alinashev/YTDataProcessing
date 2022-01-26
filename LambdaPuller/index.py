@@ -5,7 +5,7 @@ from Commons.StorageS3 import StorageS3
 from Extract.ChannelDataExtractor import ChannelDataExtractor
 from Extract.VideoCategoryExtractor import VideoCategoryExtractor
 from Extract.VideoDataExtractor import VideoDataExtractor
-from LambdaPuller.Commons.ServiceSQS import ServiceSQS
+from Commons.ServiceSQS import ServiceSQS
 from Transform.VideoIDParser import VideoIDParser
 
 
