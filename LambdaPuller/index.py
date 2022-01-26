@@ -19,9 +19,9 @@ def lambda_handler(event, context):
 
     channel_id: dict = {name: id}
 
-    channel_file_name = str(id + '.json')
-    video_file_name = str(id + '.json')
-    category_file_name = str(id + '.json')
+    channel_file_name = "chd" + str(id + '.json')
+    video_file_name = "vd" + str(id + '.json')
+    category_file_name = "ctd" + str(id + '.json')
 
     file_writer_channels: FileWriter = FileWriter('/tmp/' + channel_file_name)
     file_writer_videos: FileWriter = FileWriter('/tmp/' + video_file_name)
