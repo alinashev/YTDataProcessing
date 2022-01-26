@@ -1,5 +1,15 @@
 pipeline {
     agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+        TechnicalBucket = "a-tech-bucket"
+
+        LambdaSenderName = "a-sender"
+        LambdaPullerName = "a-puller"
+        LambdaTransformerName = "a-transformer"
+
+    }
     stages {
         stage('Submit Lambda Code') {
             steps {
@@ -11,9 +21,9 @@ pipeline {
                     rm index.zip
 
                     aws lambda update-function-code \
-                      --function-name A-test-send-25\
-                      --region us-east-2 \
-                      --s3-bucket a-tech-bucket\
+                      --function-name $LambdaSenderName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
                       --s3-key LambdaSenderCode/index.zip
 
                     cd ..
@@ -24,9 +34,9 @@ pipeline {
                     rm index.zip
 
                     aws lambda update-function-code \
-                      --function-name A-test-pull-25\
-                      --region us-east-2 \
-                      --s3-bucket a-tech-bucket\
+                      --function-name $LambdaPullerName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
                       --s3-key LambdaPullerCode/index.zip
 
                     cd ..
@@ -35,9 +45,9 @@ pipeline {
                     rm index.zip
 
                     aws lambda update-function-code \
-                      --function-name A-test-transform-25\
-                      --region us-east-2 \
-                      --s3-bucket a-tech-bucket\
+                      --function-name $LambdaTransformerName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
                       --s3-key LambdaTransformerCode/index.zip
                     '''
                 }
