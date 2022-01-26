@@ -1,5 +1,18 @@
 pipeline {
     agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+
+        BucketName = "a-data-bucket-1"
+        LambdaSenderName = "a-sender"
+        LambdaPullerName = "a-puller"
+        LambdaTransformerName = "a-transformer"
+        QueueBucketPutEventName = "a-put-s3-event"
+        QueuePullerTriggerName = "a-puller-trigger"
+        QueueTransformerTriggerName = "a-transformer-trigger"
+        DatabaseName = "a-database"
+    }
     stages {
         stage('Submit Stack') {
             steps {
@@ -7,19 +20,18 @@ pipeline {
                 {
                 sh '''
                     aws cloudformation create-stack \
-                      --stack-name a-test-stack-25 \
-                      --template-body file://Infrastructure/Infrastructure.yml --region 'us-east-2' \
+                      --stack-name $StackName \
+                      --template-body file://Infrastructure/Infrastructure.yml --region $Region \
                       --capabilities CAPABILITY_NAMED_IAM \
                       --parameters \
-                       ParameterKey=BucketName,ParameterValue=a-test-0125-bucket \
-                       ParameterKey=S3EventQueueName,ParameterValue=A-test-25qs3 \
-                       ParameterKey=ChannelSenderLambdaFunctionName,ParameterValue=A-test-send-25 \
-                       ParameterKey=ChannelPullerLambdaFunctionName,ParameterValue=A-test-pull-25 \
-                       ParameterKey=LambdaRoleName,ParameterValue=A-test-lambda-role-25 \
-                       ParameterKey=LambdaTriggerQueueName,ParameterValue=A-puller-trigger-25 \
-                       ParameterKey=DatabaseName,ParameterValue=a-test-db-25 \
-                       ParameterKey=TransformerLambdaFunctionName,ParameterValue=A-transform-25 \
-                       ParameterKey=TransformerTriggerQueueName,ParameterValue=a-transform-trigger-25 \
+                       ParameterKey=BucketName,ParameterValue=$BucketName \
+                       ParameterKey=LambdaSenderName,ParameterValue=$LambdaSenderName \
+                       ParameterKey=LambdaPullerName,ParameterValue=$LambdaPullerName \
+                       ParameterKey=LambdaTransformerName,ParameterValue=$LambdaTransformerName \
+                       ParameterKey=QueueBucketPutEventName,ParameterValue=$QueueBucketPutEventName \
+                       ParameterKey=QueuePullerTriggerName,ParameterValue=$QueuePullerTriggerName \
+                       ParameterKey=QueueTransformerTriggerName,ParameterValue=$QueueTransformerTriggerName \
+                       ParameterKey=DatabaseName,ParameterValue=$DatabaseName \
                     '''
                 }
               }
@@ -30,8 +42,8 @@ pipeline {
                     {
                     sh '''
                         aws cloudformation wait stack-create-complete \
-                            --stack-name a-test-stack \
-                            --region 'us-east-2'
+                            --stack-name $StackName \
+                            --region $Region
                         '''
                     }
                 }
