@@ -25,5 +25,5 @@ class FactChannel:
             'time_id': self.time_id,
             'view_count': self.view_count,
             'subscriber_count': self.subscriber_count,
-            'video_count': self.view_count
+            'video_count': self.video_count
         }

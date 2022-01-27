@@ -20,8 +20,8 @@ class ChannelParser(Parser):
         self.dim_time_obj_list.append(time)
 
         for channel_id in ChannelsID:
-            self.dim_channel_obj_list.append(DimChannel(str(channel_id),
-                                                        str(ChannelsID[channel_id])
+            self.dim_channel_obj_list.append(DimChannel(str(ChannelsID[channel_id]),
+                                                        str(channel_id)
                                                         )
                                              )
 
