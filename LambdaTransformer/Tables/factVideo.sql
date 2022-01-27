@@ -1,6 +1,5 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `{database}`.`factVideo` (
  `video_id` string,
- `date_id` string,
  `time_id` string,
  `view_count` bigint,
  `like_count` bigint,

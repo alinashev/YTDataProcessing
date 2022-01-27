@@ -54,20 +54,16 @@ def lambda_handler(event, context):
 
     ParquetFormat.load(chd_parser.get_fact_channel_obj_list(), '/tmp/' + "FC-" + ch_id + ".parquet")
     ParquetFormat.load(chd_parser.get_dim_channel_obj_list(), '/tmp/' + "DC-" + ch_id + ".parquet")
-    ParquetFormat.load(chd_parser.get_dim_date_obj_list(), '/tmp/' + "DDC-" + ch_id + ".parquet")
     ParquetFormat.load(chd_parser.get_dim_time_obj_list(), '/tmp/' + "DTC-" + ch_id + ".parquet")
 
     ParquetFormat.load(ctd_parser.get_fact_video_obj_list(), '/tmp/' + "FV-" + ch_id + ".parquet")
     ParquetFormat.load(ctd_parser.get_dim_video_obj_list(), '/tmp/' + "DV-" + ch_id + ".parquet")
-    ParquetFormat.load(ctd_parser.get_dim_date_obj_list(), '/tmp/' + "DDV-" + ch_id + ".parquet")
     ParquetFormat.load(ctd_parser.get_dim_time_obj_list(), '/tmp/' + "DTV-" + ch_id + ".parquet")
 
     storage.upload('/tmp/' + "FC-" + ch_id + ".parquet",
                    "Data/Channel/FactChannel/" + version.get_date() + "/" + version.get_hour())
     storage.upload('/tmp/' + "DC-" + ch_id + ".parquet",
                    "Data/Channel/DimChannel/" + version.get_date() + "/" + version.get_hour())
-    storage.upload('/tmp/' + "DDC-" + ch_id + ".parquet",
-                   "Data/Channel/DimDateChannel/" + version.get_date() + "/" + version.get_hour())
     storage.upload('/tmp/' + "DTC-" + ch_id + ".parquet",
                    "Data/Channel/DimTimeChannel/" + version.get_date() + "/" + version.get_hour())
 
@@ -75,19 +71,15 @@ def lambda_handler(event, context):
                    "Data/Video/FactVideo/" + version.get_date() + "/" + version.get_hour())
     storage.upload('/tmp/' + "DV-" + ch_id + ".parquet",
                    "Data/Video/DimVideo/" + version.get_date() + "/" + version.get_hour())
-    storage.upload('/tmp/' + "DDV-" + ch_id + ".parquet",
-                   "Data/Video/DimDateVideo/" + version.get_date() + "/" + version.get_hour())
     storage.upload('/tmp/' + "DTV-" + ch_id + ".parquet",
                    "Data/Video/DimTimeVideo/" + version.get_date() + "/" + version.get_hour())
 
     Loader.load("Tables/factChannel.sql")
     Loader.load("Tables/dimChannel.sql")
-    Loader.load("Tables/dimDateChannel.sql")
     Loader.load("Tables/dimTimeChannel.sql")
 
     Loader.load("Tables/factVideo.sql")
     Loader.load("Tables/dimVideo.sql")
-    Loader.load("Tables/dimDateVideo.sql")
     Loader.load("Tables/dimTimeVideo.sql")
 
     return "Successfully completed"

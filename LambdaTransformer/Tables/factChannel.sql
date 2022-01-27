@@ -1,6 +1,5 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `{database}`.`factChannel` (
 `channel_id` string,
- `date_id` string,
  `time_id` string,
  `view_count` bigint,
  `subscriber_count` bigint,

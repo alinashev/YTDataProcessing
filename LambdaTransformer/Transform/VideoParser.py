@@ -1,6 +1,5 @@
 from typing import Any
 
-from DWHEntities.Video.DimDateVideo import DimDateVideo
 from DWHEntities.Video.DimTimeVideo import DimTimeVideo
 from DWHEntities.Video.DimVideo import DimVideo
 from DWHEntities.Video.FactVideo import FactVideo
@@ -11,15 +10,12 @@ class VideoParser(Parser):
     def __init__(self) -> None:
         self.fact_video_obj_list: list = list()
         self.dim_video_obj_list: list = list()
-        self.dim_date_obj_list: list = list()
         self.dim_time_obj_list: list = list()
 
     def parse(self, json_string: Any, video_obj_list: Any) -> None:
 
-        date: DimDateVideo = DimDateVideo()
         time: DimTimeVideo = DimTimeVideo()
 
-        self.dim_date_obj_list.append(date)
         self.dim_time_obj_list.append(time)
 
         i = 0
@@ -68,7 +64,6 @@ class VideoParser(Parser):
             self.fact_video_obj_list.append(
                 FactVideo(
                     str(obj.get_video_id()),
-                    str(date.get_date_id()),
                     str(time.get_time_id()),
                     res_view_count,
                     res_like_count,
@@ -82,9 +77,6 @@ class VideoParser(Parser):
 
     def get_dim_video_obj_list(self) -> list:
         return self.dim_video_obj_list
-
-    def get_dim_date_obj_list(self) -> list:
-        return self.dim_date_obj_list
 
     def get_dim_time_obj_list(self) -> list:
         return self.dim_time_obj_list

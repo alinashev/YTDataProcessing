@@ -3,36 +3,50 @@ from datetime import datetime
 
 class DimTimeChannel:
     def __init__(self) -> None:
-        self.time_id: str = str(datetime.now().time())
+        self.time_id: str = str(datetime.now().date()) + "-" + str(datetime.now().hour)
+        self.year: int = datetime.now().year
+        self.month: int = datetime.now().month
+        self.day: int = datetime.now().day
         self.hour: int = datetime.now().hour
-        self.minute: int = datetime.now().minute
-        self.second: int = datetime.now().second
+        self.week: int = datetime.now().date().isocalendar()[1]
 
     def get_time_id(self) -> str:
         return self.time_id
 
+    def get_year(self) -> int:
+        return self.year
+
+    def get_month(self) -> int:
+        return self.month
+
+    def get_day(self) -> int:
+        return self.day
+
     def get_hour(self) -> int:
         return self.hour
 
-    def get_minute(self) -> int:
-        return self.minute
-
-    def get_second(self) -> int:
-        return self.second
+    def get_week(self) -> int:
+        return self.week
 
     def __str__(self) -> str:
         return 'time_id {time_id}' \
+               '\nyear {year}' \
+               '\nmonth {month}' \
+               '\nday {day}' \
                '\nhour {hour}' \
-               '\nminute {minute}' \
-               '\nsecond {second}'.format(time_id=self.time_id,
-                                          hour=self.hour,
-                                          minute=self.minute,
-                                          second=self.second)
+               '\nweek {week}'.format(time_id=self.time_id,
+                                      year=self.year,
+                                      month=self.month,
+                                      day=self.day,
+                                      hour=self.hour,
+                                      week=self.week)
 
     def to_dict(self) -> dict:
         return {
             'time_id': self.time_id,
+            'year': self.year,
+            'month': self.month,
+            'day': self.day,
             'hour': self.hour,
-            'minute': self.minute,
-            'second': self.second
+            'week': self.week
         }
