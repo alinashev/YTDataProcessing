@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+    }
     stages {
         stage('Submit Stack') {
             steps {
@@ -7,8 +11,8 @@ pipeline {
                 {
                 sh '''
                     aws cloudformation delete-stack \
-                      --stack-name a-test-stack \
-                      --region 'us-east-2'
+                      --stack-name $StackName \
+                      --region $Region
                     '''
                 }
               }
@@ -19,8 +23,8 @@ pipeline {
                     {
                     sh '''
                         aws cloudformation wait stack-delete-complete \
-                          --stack-name a-test-stack \
-                          --region 'us-east-2'
+                          --stack-name $StackName \
+                          --region $Region
                         '''
                     }
                 }
