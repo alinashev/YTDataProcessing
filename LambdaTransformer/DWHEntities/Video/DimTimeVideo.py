@@ -1,32 +1,52 @@
-class DimVideo:
-    def __init__(self, video_id: str, channel_id: str, channel_name: str,
-                 title: str, description: str, category_id: str) -> None:
-        self.video_id: str = video_id
-        self.channel_id: str = channel_id
-        self.channel_name: str = channel_name
-        self.title: str = title
-        self.description: str = description
-        self.category_id: str = category_id
+from datetime import datetime
+
+
+class DimTimeVideo:
+    def __init__(self) -> None:
+        self.time_id: str = str(datetime.now().date()) + "-" + str(datetime.now().hour)
+        self.year: int = datetime.now().year
+        self.month: int = datetime.now().month
+        self.day: int = datetime.now().day
+        self.hour: int = datetime.now().hour
+        self.week: int = datetime.now().date().isocalendar()[1]
+
+    def get_time_id(self) -> str:
+        return self.time_id
+
+    def get_year(self) -> int:
+        return self.year
+
+    def get_month(self) -> int:
+        return self.month
+
+    def get_day(self) -> int:
+        return self.day
+
+    def get_hour(self) -> int:
+        return self.hour
+
+    def get_week(self) -> int:
+        return self.week
 
     def __str__(self) -> str:
-        return 'video_id {video_id}' \
-               '\nchannel_id {channel_id}' \
-               '\nchannel_name {channel_name}' \
-               '\ntitle {title}' \
-               '\ndescription {description}' \
-               '\ncategory_id {category_id}'.format(video_id=self.video_id,
-                                                    channel_id=self.channel_id,
-                                                    channel_name=self.channel_name,
-                                                    title=self.title,
-                                                    description=self.description,
-                                                    category_id=self.category_id)
+        return 'time_id {time_id}' \
+               '\nyear {year}' \
+               '\nmonth {month}' \
+               '\nday {day}' \
+               '\nhour {hour}' \
+               '\nweek {week}'.format(time_id=self.time_id,
+                                      year=self.year,
+                                      month=self.month,
+                                      day=self.day,
+                                      hour=self.hour,
+                                      week=self.week)
 
     def to_dict(self) -> dict:
         return {
-            'video_id': self.video_id,
-            'channel_id': self.channel_id,
-            'channel_name': self.channel_name,
-            'title': self.title,
-            'description': self.description,
-            'category_id': self.category_id
+            'time_id': self.time_id,
+            'year': self.year,
+            'month': self.month,
+            'day': self.day,
+            'hour': self.hour,
+            'week': self.week
         }
