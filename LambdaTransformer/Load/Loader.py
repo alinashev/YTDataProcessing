@@ -8,7 +8,7 @@ class Loader:
     def load(file) -> None:
         try:
             data_base: AthenaDataBase = AthenaDataBase()
-            connect: Any = data_base.connect(os.environ.get("DatabaseName"))
+            connect: Any = data_base.connect(os.environ.get("BucketName"))
             cursor: Any = connect.cursor()
 
             sql_file = open(file, 'r')

@@ -7,8 +7,10 @@ class AthenaDataBase:
         self.connection = None
 
     def connect(self,
-                s3_staging_dir,
+                bucket,
                 region_name='us-east-2') -> Any:
+
+        s3_staging_dir = "s3://" + bucket + "/Athena/Result/"
         try:
             self.connection = connect(s3_staging_dir,
                                       region_name=region_name)
