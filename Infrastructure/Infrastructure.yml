@@ -17,6 +17,10 @@ Parameters:
         Description: Lambda function name
         Type: String
 
+    LambdaAggregatorName:
+      Description: Lambda function name
+      Type: String
+
     #Queues:
     QueuePullerTriggerName:
         Description: Queue name
@@ -107,6 +111,27 @@ Resources:
                 - !Ref LayerPandas
                 - !Ref LayerNumpy
 
+    LambdaAggregator:
+      Type: AWS::Lambda::Function
+      Properties:
+        FunctionName: !Ref LambdaAggregatorName
+        Handler: index.lambda_handler
+        Role: !GetAtt RoleLambdaAggregator.Arn
+        Code:
+          S3Bucket: a-tech-bucket
+          S3Key: Default/index.zip
+        Environment:
+          Variables:
+            BucketName: !Ref BucketName
+            DatabaseName: !Ref DatabaseName
+        Timeout: 120
+        MemorySize: 256
+        Runtime: python3.9
+        Layers:
+          - !Ref LayerPyAthena
+          - !Ref LayerPyArrow
+          - !Ref LayerPandas
+          - !Ref LayerNumpy
     #Layers:
     LayerGoogleAPI:
         Type: AWS::Lambda::LayerVersion
@@ -270,6 +295,24 @@ Resources:
                                 - lambda.amazonaws.com
                         Action:
                             - 'sts:AssumeRole'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+                - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+                - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+
+    RoleLambdaAggregator:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                        Principal:
+                            Service:
+                              - lambda.amazonaws.com
+                        Action:
+                          - 'sts:AssumeRole'
             ManagedPolicyArns:
                 - arn:aws:iam::aws:policy/AmazonS3FullAccess
                 - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
