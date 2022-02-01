@@ -8,6 +8,7 @@ pipeline {
         LambdaSenderName = "a-sender"
         LambdaPullerName = "a-puller"
         LambdaTransformerName = "a-transformer"
+        LambdaAggregatorName = "a-aggregator"
 
     }
     stages {
@@ -27,6 +28,7 @@ pipeline {
                       --s3-key LambdaSenderCode/index.zip
 
                     cd ..
+
                     cd LambdaPuller && zip -r9 index.zip .
                     aws s3 cp s3://a-tech-bucket/Google-API-key/keys.py .
                     zip index.zip keys.py
@@ -40,6 +42,7 @@ pipeline {
                       --s3-key LambdaPullerCode/index.zip
 
                     cd ..
+
                     cd LambdaTransformer && zip -r9 index.zip .
                     aws s3 cp index.zip s3://a-tech-bucket/LambdaTransformerCode/index.zip
                     rm index.zip
@@ -49,6 +52,18 @@ pipeline {
                       --region $Region \
                       --s3-bucket $TechnicalBucket\
                       --s3-key LambdaTransformerCode/index.zip
+
+                    cd ..
+
+                    cd LambdaAggregator && zip -r9 index.zip .
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaAggregatorCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name LambdaAggregatorName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
+                      --s3-key LambdaAggregatorCode/index.zip
                     '''
                 }
               }
