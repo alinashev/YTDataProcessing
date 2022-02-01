@@ -60,7 +60,7 @@ pipeline {
                     rm index.zip
 
                     aws lambda update-function-code \
-                      --function-name LambdaAggregatorName\
+                      --function-name $LambdaAggregatorName\
                       --region $Region \
                       --s3-bucket $TechnicalBucket\
                       --s3-key LambdaAggregatorCode/index.zip
