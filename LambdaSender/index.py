@@ -1,13 +1,12 @@
-import os
-
 from Commons.ChannelsID import ChannelsID
-from Commons.ServiceSQS import ServiceSQS
 
 
 def lambda_handler(event, context):
-    service: ServiceSQS = ServiceSQS()
-    channel_id: list = ChannelsID('channels.txt').get_channels_id()
-    for channel in channel_id:
-        service.send_message(channel, os.environ.get("QueuePullerTriggerName"))
+    tasks = list()
+    channel_dict: list = ChannelsID('channels.txt').get_channels_id()
+    for i in channel_dict:
+        tasks.append({i: channel_dict[i]})
 
-    return "Successfully completed"
+    return {
+        'body': {'taskList': tasks}
+    }
