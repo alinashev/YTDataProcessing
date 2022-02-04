@@ -11,9 +11,6 @@ pipeline {
         LambdaPullerName = "a-puller"
         LambdaTransformerName = "a-transformer"
         LambdaAggregatorName = "a-aggregator"
-        QueueBucketPutEventName = "a-put-s3-event"
-        QueuePullerTriggerName = "a-puller-trigger"
-        QueueTransformerTriggerName = "a-transformer-trigger"
         DatabaseName = "a-database"
     }
     stages {
@@ -34,9 +31,6 @@ pipeline {
                        ParameterKey=LambdaPullerName,ParameterValue=$LambdaPullerName \
                        ParameterKey=LambdaTransformerName,ParameterValue=$LambdaTransformerName \
                        ParameterKey=LambdaAggregatorName,ParameterValue=$LambdaAggregatorName \
-                       ParameterKey=QueueBucketPutEventName,ParameterValue=$QueueBucketPutEventName \
-                       ParameterKey=QueuePullerTriggerName,ParameterValue=$QueuePullerTriggerName \
-                       ParameterKey=QueueTransformerTriggerName,ParameterValue=$QueueTransformerTriggerName \
                        ParameterKey=DatabaseName,ParameterValue=$DatabaseName \
                     '''
                 }
