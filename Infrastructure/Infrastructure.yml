@@ -341,4 +341,4 @@ Resources:
             RoleArn: !GetAtt RoleStateMachine.Arn
             DefinitionS3Location:
                 Bucket: a-tech-bucket
-                Key: StateMachines/Default/defaultSM.json
+                Key: StateMachines/stateMachineDefinition.json
