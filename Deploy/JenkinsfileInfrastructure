@@ -15,6 +15,19 @@ pipeline {
         DatabaseName = "a-database"
     }
     stages {
+        stage('Uploading a SM definition'){
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh  '''
+                    cd Infrastructure
+                    aws s3 cp stateMachineDefinition.json s3://a-tech-bucket/StateMachines/stateMachineDefinition.json
+                    cd ..
+                '''
+                }
+            }
+        }
+
         stage('Submit Stack') {
             steps {
                 withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])

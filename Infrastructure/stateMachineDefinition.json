@@ -1,0 +1,82 @@
+{
+  "StartAt": "LambdaSender",
+  "States": {
+    "LambdaSender": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "{LambdaSender.Arn}:$LATEST"
+      },
+      "Next": "MapLambdaPuller"
+    },
+    "MapLambdaPuller": {
+      "Type": "Map",
+      "InputPath": "$.body",
+      "ItemsPath": "$.taskList",
+      "MaxConcurrency": 100,
+      "ResultPath": "$.channel",
+      "Iterator": {
+        "StartAt": "LambdaPuller",
+        "States": {
+          "LambdaPuller": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+              "Payload.$": "$",
+              "FunctionName": "${LambdaPuller.Arn}:$LATEST"
+            },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "Lambda.ServiceException",
+                  "Lambda.AWSLambdaException",
+                  "Lambda.SdkClientException"
+                ],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 6,
+                "BackoffRate": 2
+              }
+            ],
+            "Next": "LambdaTransformer"
+          },
+          "LambdaTransformer": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+              "Payload.$": "$",
+              "FunctionName": "{LambdaTransformer.Arn}:$LATEST"
+            },
+            "End": true
+          }
+        }
+      },
+      "Next": "LambdaAggregator"
+    },
+    "LambdaAggregator": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "{LambdaAggregator.Arn}:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    }
+  }
+}
