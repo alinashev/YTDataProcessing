@@ -5,19 +5,15 @@ from Commons.StorageS3 import StorageS3
 from Extract.ChannelDataExtractor import ChannelDataExtractor
 from Extract.VideoCategoryExtractor import VideoCategoryExtractor
 from Extract.VideoDataExtractor import VideoDataExtractor
-from Commons.ServiceSQS import ServiceSQS
 from Transform.VideoIDParser import VideoIDParser
 
 
 def lambda_handler(event, context):
-    channel = (event['Records'][0]['body'])
-    future_message = channel
+    name = list(event.keys())[0]
+    id = event[name]
 
     folder_name = str(datetime.now().date()) + "/" + \
                   str(datetime.now().hour) + "h"
-
-    name = channel.split()[0]
-    id = channel.split()[1]
 
     channel_id: dict = {name: id}
 
@@ -49,6 +45,4 @@ def lambda_handler(event, context):
     storage.upload(file_writer_videos.get_path(), "Resources/" + folder_name + "/" + "videoData")
     storage.upload(file_writer_category.get_path(), "Resources/" + folder_name + "/" + "categoryData")
 
-    service: ServiceSQS = ServiceSQS()
-    service.send_message(future_message, os.environ.get("QueueTransformerTriggerName"))
-    return "Successfully completed"
+    return event
