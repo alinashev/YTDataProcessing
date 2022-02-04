@@ -10,11 +10,10 @@ from Transform.VideoParser import VideoParser
 
 
 def lambda_handler(event, context):
-    channel = (event['Records'][0]['body'])
     version = DataVersion()
 
-    ch_name: str = channel.split()[0]
-    ch_id: str = channel.split()[1]
+    ch_name = list(event.keys())[0]
+    ch_id = event[ch_name]
 
     channel_id: dict = {ch_name: ch_id}
 
@@ -82,4 +81,4 @@ def lambda_handler(event, context):
     Loader.load("Tables/dimVideo.sql")
     Loader.load("Tables/dimTimeVideo.sql")
 
-    return "Successfully completed"
+    return event
