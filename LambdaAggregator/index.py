@@ -1,3 +1,4 @@
+import json
 from Commons.AthenaDataBase import AthenaDataBase
 from Commons.Aggregator import Aggregator
 from Commons.DataVersion import DataVersion
@@ -13,29 +14,27 @@ def lambda_handler(event, context):
     dataBase = "a-database"
 
     version: DataVersion = DataVersion()
-    """
-    day = version.get_day(),
-    hour = version.get_hour()
-    """
-    day = 28
-    hour = 10
 
     athena: AthenaDataBase = AthenaDataBase(bucket, s3_staging_dir, region_name)
     aggregator: Aggregator = Aggregator(athena.connect())
     tableCreator: TableCreator = TableCreator(athena.connect())
     storage: StorageS3 = StorageS3(bucket_name=bucket)
 
-    df_least_view_count_ch = aggregator.execute(open(
-        "Query/aggregationLeastViewCountsInChannels.sql",'r').read().format(database=dataBase, day=day, hour=hour))
+    df_least_view_count_ch = aggregator.execute(open("Query/aggregationLeastViewCountsInChannels.sql",
+                                                     'r').read().format(database=dataBase, day=version.get_day(),
+                                                                        hour=version.get_hour()))
 
     df_most_comments_v = aggregator.execute(open(
-        "Query/aggregationMostCommentsVideo.sql", 'r').read().format(database=dataBase, day=day, hour=hour))
+        "Query/aggregationMostCommentsVideo.sql", 'r').read().format(database=dataBase, day=version.get_day(),
+                                                                     hour=version.get_hour()))
 
     df_most_liked_v = aggregator.execute(open(
-        "Query/aggregationMostLikedVideo.sql", 'r').read().format(database=dataBase, day=day, hour=hour))
+        "Query/aggregationMostLikedVideo.sql", 'r').read().format(database=dataBase, day=version.get_day(),
+                                                                  hour=version.get_hour()))
 
     df_most_subscribed_ch = aggregator.execute(open(
-        "Query/aggregationMostSubscribedChannel.sql", 'r').read().format(database=dataBase, day=day, hour=hour))
+        "Query/aggregationMostSubscribedChannel.sql", 'r').read().format(database=dataBase, day=version.get_day(),
+                                                                         hour=version.get_hour()))
 
     ParquetFormat.write(df_least_view_count_ch, "/tmp/" + "least-view-count-ch" + ".parquet")
     ParquetFormat.write(df_most_comments_v, "/tmp/" + "most-comments-v" + ".parquet")
@@ -60,4 +59,7 @@ def lambda_handler(event, context):
     tableCreator.create(open("Tables/tableMostSubscribedChannel.sql", 'r').
                         read().format(database=dataBase, bucket=bucket))
 
-    return "Successfully completed"
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Successfully completed!')
+    }
