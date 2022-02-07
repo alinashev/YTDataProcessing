@@ -9,7 +9,7 @@ FROM (
 					day,
 					hour
 				FROM "{database}"."dimtimechannel"
-				WHERE day = {day}
+				WHERE add_date = CAST(`{add_date}` AS DATE)
 					AND hour = {hour}
 			) AS a
 			INNER JOIN (

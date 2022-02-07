@@ -21,19 +21,19 @@ def lambda_handler(event, context):
     storage: StorageS3 = StorageS3(bucket_name=bucket)
 
     df_least_view_count_ch = aggregator.execute(open("Query/aggregationLeastViewCountsInChannels.sql",
-                                                     'r').read().format(database=dataBase, day=version.get_day(),
+                                                     'r').read().format(database=dataBase, add_date=version.get_date(),
                                                                         hour=version.get_hour()))
 
     df_most_comments_v = aggregator.execute(open(
-        "Query/aggregationMostCommentsVideo.sql", 'r').read().format(database=dataBase, day=version.get_day(),
+        "Query/aggregationMostCommentsVideo.sql", 'r').read().format(database=dataBase, add_date=version.get_date(),
                                                                      hour=version.get_hour()))
 
     df_most_liked_v = aggregator.execute(open(
-        "Query/aggregationMostLikedVideo.sql", 'r').read().format(database=dataBase, day=version.get_day(),
+        "Query/aggregationMostLikedVideo.sql", 'r').read().format(database=dataBase, add_date=version.get_date(),
                                                                   hour=version.get_hour()))
 
     df_most_subscribed_ch = aggregator.execute(open(
-        "Query/aggregationMostSubscribedChannel.sql", 'r').read().format(database=dataBase, day=version.get_day(),
+        "Query/aggregationMostSubscribedChannel.sql", 'r').read().format(database=dataBase, add_date=version.get_date(),
                                                                          hour=version.get_hour()))
 
     ParquetFormat.write(df_least_view_count_ch, "/tmp/" + "least-view-count-ch" + ".parquet")
