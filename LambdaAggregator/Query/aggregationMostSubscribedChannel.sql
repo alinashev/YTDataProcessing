@@ -1,6 +1,8 @@
 SELECT *
 FROM (
 		SELECT DISTINCT  a.time_id,
+		    a.add_date,
+		    a.hour,
 			b.subscriber_count,
 			b.channel_id,
 			c.channel_name

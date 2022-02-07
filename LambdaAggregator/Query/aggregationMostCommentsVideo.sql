@@ -1,6 +1,8 @@
 SELECT *
 FROM (
 		SELECT DISTINCT  a.time_id,
+		    a.add_date,
+		    a.hour,
 			b.comment_count,
 			b.video_id,
 			c.title
