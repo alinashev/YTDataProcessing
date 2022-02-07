@@ -8,7 +8,7 @@ FROM (
 			c.channel_name
 		FROM (
 				SELECT time_id,
-					day,
+					add_date,
 					hour
 				FROM "{database}"."dimtimechannel"
 				WHERE add_date = CAST('{add_date}' AS DATE)

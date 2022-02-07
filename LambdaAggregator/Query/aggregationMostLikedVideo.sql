@@ -7,8 +7,10 @@ FROM (
 			b.video_id,
 			c.title
 		FROM (
-				SELECT *
-				FROM "{database}"."dimtimechannel"
+				SELECT time_id,
+					add_date,
+					hour
+				FROM "{database}"."dimtimevideo"
 				WHERE add_date = CAST('{add_date}' AS DATE)
 					AND hour = {hour}
 			) AS a
