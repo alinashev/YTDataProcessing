@@ -1,6 +1,6 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `{database}`.`dimTimeChannel` (
  `time_id` string,
- `date` date,
+ `add_date` date,
  `year` int,
  `month` int,
  `day` int,

@@ -5,7 +5,7 @@ from typing import Any
 class DimTimeChannel:
     def __init__(self) -> None:
         self.time_id: str = str(datetime.now().date()) + "-" + str(datetime.now().hour)
-        self.date: Any = datetime.now().date()
+        self.add_date: Any = datetime.now().date()
         self.year: int = datetime.now().year
         self.month: int = datetime.now().month
         self.day: int = datetime.now().day
@@ -32,12 +32,13 @@ class DimTimeChannel:
 
     def __str__(self) -> str:
         return 'time_id {time_id}' \
+               '\nadd_date {add_date}' \
                '\nyear {year}' \
                '\nmonth {month}' \
                '\nday {day}' \
                '\nhour {hour}' \
                '\nweek {week}'.format(time_id=self.time_id,
-                                      date=self.date,
+                                      add_date=self.add_date,
                                       year=self.year,
                                       month=self.month,
                                       day=self.day,
@@ -47,7 +48,7 @@ class DimTimeChannel:
     def to_dict(self) -> dict:
         return {
             'time_id': self.time_id,
-            'date': self.date,
+            'add_date': self.add_date,
             'year': self.year,
             'month': self.month,
             'day': self.day,
