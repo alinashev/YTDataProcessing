@@ -252,6 +252,11 @@ Resources:
         Properties:
           AssumeRolePolicyDocument:
             Version: "2012-10-17"
+            ManagedPolicyArns:
+              - arn:aws:iam::aws:policy/AWSLambdaExecute
+              - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+              - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+              - arn:aws:iam::aws:policy/AWSLambda_FullAccess
             Statement:
               -
                 Effect: "Allow"
