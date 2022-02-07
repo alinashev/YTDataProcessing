@@ -7,7 +7,7 @@ FROM (
 		FROM (
 				SELECT *
 				FROM "{database}"."dimtimechannel"
-				WHERE add_date = CAST(`{add_date}` AS DATE)
+				WHERE add_date = CAST('{add_date}' AS DATE)
 					AND hour = {hour}
 			) AS a
 			INNER JOIN (
