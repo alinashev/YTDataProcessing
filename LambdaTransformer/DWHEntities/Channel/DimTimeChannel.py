@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import Any
 
 
 class DimTimeChannel:
     def __init__(self) -> None:
         self.time_id: str = str(datetime.now().date()) + "-" + str(datetime.now().hour)
+        self.date: Any = datetime.now().date()
         self.year: int = datetime.now().year
         self.month: int = datetime.now().month
         self.day: int = datetime.now().day
@@ -35,6 +37,7 @@ class DimTimeChannel:
                '\nday {day}' \
                '\nhour {hour}' \
                '\nweek {week}'.format(time_id=self.time_id,
+                                      date=self.date,
                                       year=self.year,
                                       month=self.month,
                                       day=self.day,
@@ -44,6 +47,7 @@ class DimTimeChannel:
     def to_dict(self) -> dict:
         return {
             'time_id': self.time_id,
+            'date': self.date,
             'year': self.year,
             'month': self.month,
             'day': self.day,

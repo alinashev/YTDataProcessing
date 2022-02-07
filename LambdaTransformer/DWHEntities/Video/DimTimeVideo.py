@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import Any
 
 
 class DimTimeVideo:
     def __init__(self) -> None:
         self.time_id: str = str(datetime.now().date()) + "-" + str(datetime.now().hour)
+        self.date: Any = datetime.now().date()
         self.year: int = datetime.now().year
         self.month: int = datetime.now().month
         self.day: int = datetime.now().day
@@ -30,11 +32,13 @@ class DimTimeVideo:
 
     def __str__(self) -> str:
         return 'time_id {time_id}' \
+               '\ndate {date}' \
                '\nyear {year}' \
                '\nmonth {month}' \
                '\nday {day}' \
                '\nhour {hour}' \
                '\nweek {week}'.format(time_id=self.time_id,
+                                      date=self.date,
                                       year=self.year,
                                       month=self.month,
                                       day=self.day,
@@ -44,6 +48,7 @@ class DimTimeVideo:
     def to_dict(self) -> dict:
         return {
             'time_id': self.time_id,
+            'date': self.date,
             'year': self.year,
             'month': self.month,
             'day': self.day,

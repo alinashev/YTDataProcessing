@@ -1,5 +1,6 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `{database}`.`dimTimeVideo` (
  `time_id` string,
+ `date` date,
  `year` int,
  `month` int,
  `day` int,
