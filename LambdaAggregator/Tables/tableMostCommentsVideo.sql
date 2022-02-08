@@ -1,5 +1,6 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `{database}`.`mostCommentsVideo` (
 	`time_id` string,
+    `add_date` date,
 	`comment_count` bigint,
 	`video_id` string,
 	`title` string

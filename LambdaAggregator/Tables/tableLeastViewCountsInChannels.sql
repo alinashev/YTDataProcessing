@@ -1,5 +1,6 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `{database}`.`leastViewCountsInChannels` (
 	`time_id` string,
+    `add_date` date,
 	`view_count` bigint,
 	`channel_id` string,
 	`channel_name` string
