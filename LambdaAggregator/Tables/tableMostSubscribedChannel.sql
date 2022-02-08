@@ -1,6 +1,7 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `{database}`.`mostSubscribedChannel` (
 `time_id` string,
 `add_date` date,
+`hour` int,
 `subscriber_count` bigint,
 `channel_id` string,
 `channel_name` string
