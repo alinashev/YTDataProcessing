@@ -128,3 +128,63 @@ Resources:
               - !Ref BucketName
               - /
               - Aggregated/mostlikedvideo
+
+  AggregationTables5:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref 'AWS::AccountId'
+      DatabaseName: !Ref DatabaseName
+      TableInput:
+        Name: aggregation5
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - Name: time_id
+              Type: string
+            - Name: add_date
+              Type: date
+            - Name: hour
+              Type: int
+            - Name: comment_count
+              Type: bigint
+            - Name: video_id
+              Type: string
+            - Name: channel_id
+              Type: string
+          Compressed: False
+          Location: !Join
+            - ''
+            - - 's3://'
+              - !Ref BucketName
+              - /
+              - Aggregated/for-each-channel-mostcommentsvideo
+
+  AggregationTables6:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref 'AWS::AccountId'
+      DatabaseName: !Ref DatabaseName
+      TableInput:
+        Name: aggregation6
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - Name: time_id
+              Type: string
+            - Name: add_date
+              Type: date
+            - Name: hour
+              Type: int
+            - Name: like_count
+              Type: bigint
+            - Name: video_id
+              Type: string
+            - Name: channel_id
+              Type: string
+          Compressed: False
+          Location: !Join
+            - ''
+            - - 's3://'
+              - !Ref BucketName
+              - /
+              - Aggregated/for-each-channel-mostlikedvideo
