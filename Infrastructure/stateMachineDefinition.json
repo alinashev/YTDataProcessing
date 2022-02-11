@@ -54,29 +54,81 @@
           }
         }
       },
-      "Next": "LambdaAggregator"
+      "Next": "AthenaStartQueryInfo"
     },
-    "LambdaAggregator": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "OutputPath": "$.Payload",
-      "Parameters": {
-        "Payload.$": "$",
-        "FunctionName": "{LambdaAggregator.Arn}:$LATEST"
-      },
-      "Retry": [
+    "AthenaStartQueryInfo": {
+      "Type": "Parallel",
+      "End": true,
+      "Branches": [
         {
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6,
-          "BackoffRate": 2
+          "StartAt": "Aggregation1",
+          "States": {
+            "Aggregation1": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "INSERT INTO \"a-database\".\"aggregation1\" SELECT * FROM ( SELECT DISTINCT a.time_id, a.add_date, a.hour, b.view_count, b.channel_id, c.channel_name FROM (SELECT time_id,add_date, hour FROM \"a-database\".\"dimtimechannel\" WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP))) AS a INNER JOIN ( SELECT time_id, view_count, channel_id FROM \"a-database\".\"factchannel\") AS b ON a.time_id = b.time_id INNER JOIN( SELECT * FROM \"a-database\".\"dimchannel\") AS c ON b.channel_id = c.channel_id)ORDER BY view_count ASC LIMIT 3;",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/leastviewcountsinchannels"
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Aggregation2",
+          "States": {
+            "Aggregation2": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "INSERT INTO \"a-database\".\"aggregation2\" SELECT * FROM (SELECT DISTINCT  a.time_id, a.add_date, a.hour, b.subscriber_count, b.channel_id, c.channel_name FROM ( SELECT time_id, add_date, hour FROM \"a-database\".\"dimtimechannel\" WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP))) AS a INNER JOIN ( SELECT time_id, subscriber_count, channel_id FROM \"a-database\".\"factchannel\") AS b ON a.time_id = b.time_id INNER JOIN( SELECT * FROM \"a-database\".\"dimchannel\" ) AS c ON b.channel_id = c.channel_id )ORDER BY subscriber_count DESC LIMIT 3;",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/mostsubscribedchannel"
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Aggregation3",
+          "States": {
+            "Aggregation3": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "INSERT INTO \"a-database\".\"aggregation3\" SELECT * FROM ( SELECT DISTINCT  a.time_id, a.add_date, a.hour, b.comment_count, b.video_id, c.title FROM (SELECT time_id, add_date, hour FROM \"a-database\".\"dimtimevideo\" WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP))) AS a INNER JOIN ( SELECT * FROM \"a-database\".\"factvideo\") AS b ON a.time_id = b.time_id INNER JOIN(SELECT * FROM \"a-database\".\"dimvideo\" ) AS c ON b.video_id = c.video_id) ORDER BY comment_count DESC LIMIT 3; ",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/mostcommentsvideo"
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Aggregation4",
+          "States": {
+            "Aggregation4": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "INSERT INTO \"a-database\".\"aggregation4\" SELECT * FROM (SELECT DISTINCT  a.time_id, a.add_date, a.hour, b.like_count, b.video_id, c.title FROM (SELECT time_id, add_date, hour FROM \"a-database\".\"dimtimevideo\" WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP))) AS a INNER JOIN (SELECT * FROM \"a-database\".\"factvideo\") AS b ON a.time_id = b.time_id INNER JOIN(SELECT * FROM \"a-database\".\"dimvideo\") AS c ON b.video_id = c.video_id) ORDER BY like_count DESC LIMIT 3; ",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/mostlikedvideo"
+                }
+              },
+              "End": true
+            }
+          }
         }
-      ],
-      "End": true
+      ]
     }
   }
 }

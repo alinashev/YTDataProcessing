@@ -17,10 +17,6 @@ Parameters:
         Description: Lambda function name
         Type: String
 
-    LambdaAggregatorName:
-        Description: Lambda function name
-        Type: String
-
         #DataBase:
     DatabaseName:
         Description: Database name
@@ -87,27 +83,6 @@ Resources:
                 - !Ref LayerPandas
                 - !Ref LayerNumpy
 
-    LambdaAggregator:
-      Type: AWS::Lambda::Function
-      Properties:
-        FunctionName: !Ref LambdaAggregatorName
-        Handler: index.lambda_handler
-        Role: !GetAtt RoleLambdaAggregator.Arn
-        Code:
-          S3Bucket: a-tech-bucket
-          S3Key: Default/index.zip
-        Environment:
-          Variables:
-            BucketName: !Ref BucketName
-            DatabaseName: !Ref DatabaseName
-        Timeout: 120
-        MemorySize: 256
-        Runtime: python3.9
-        Layers:
-          - !Ref LayerPyAthena
-          - !Ref LayerPyArrow
-          - !Ref LayerPandas
-          - !Ref LayerNumpy
     #Layers:
     LayerGoogleAPI:
         Type: AWS::Lambda::LayerVersion
@@ -255,6 +230,8 @@ Resources:
             - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
             - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
             - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+            - arn:aws:iam::aws:policy/AmazonS3FullAccess
+            - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
           AssumeRolePolicyDocument:
             Version: "2012-10-17"
             Statement:

@@ -1,0 +1,130 @@
+Description: AWS CloudFormation Template to create aggregation tables
+Parameters:
+  DatabaseName:
+    Description: Database name
+    Type: String
+
+  BucketName:
+    Description: S3 Bucket name
+    Type: String
+
+Resources:
+  AggregationTables1:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref 'AWS::AccountId'
+      DatabaseName: !Ref DatabaseName
+      TableInput:
+        Name: aggregation1
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - Name: time_id
+              Type: string
+            - Name: add_date
+              Type: date
+            - Name: hour
+              Type: int
+            - Name: view_count
+              Type: bigint
+            - Name: channel_id
+              Type: string
+            - Name: channel_name
+              Type: string
+          Compressed: False
+          Location: !Join
+            - ''
+            - - 's3://'
+              - !Ref BucketName
+              - /
+              - Aggregated/leastviewcountsinchannels
+
+  AggregationTables2:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref 'AWS::AccountId'
+      DatabaseName: !Ref DatabaseName
+      TableInput:
+        Name: aggregation2
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - Name: time_id
+              Type: string
+            - Name: add_date
+              Type: date
+            - Name: hour
+              Type: int
+            - Name: subscriber_count
+              Type: bigint
+            - Name: channel_id
+              Type: string
+            - Name: channel_name
+              Type: string
+          Compressed: False
+          Location: !Join
+            - ''
+            - - 's3://'
+              - !Ref BucketName
+              - /
+              - Aggregated/mostsubscribedchannel
+
+  AggregationTables3:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref 'AWS::AccountId'
+      DatabaseName: !Ref DatabaseName
+      TableInput:
+        Name: aggregation3
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - Name: time_id
+              Type: string
+            - Name: add_date
+              Type: date
+            - Name: hour
+              Type: int
+            - Name: comment_count
+              Type: bigint
+            - Name: video_id
+              Type: string
+            - Name: title
+              Type: string
+          Compressed: False
+          Location: !Join
+            - ''
+            - - 's3://'
+              - !Ref BucketName
+              - /
+              - Aggregated/mostcommentsvideo
+
+  AggregationTables4:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref 'AWS::AccountId'
+      DatabaseName: !Ref DatabaseName
+      TableInput:
+        Name: aggregation4
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - Name: time_id
+              Type: string
+            - Name: add_date
+              Type: date
+            - Name: hour
+              Type: int
+            - Name: like_count
+              Type: bigint
+            - Name: video_id
+              Type: string
+            - Name: title
+              Type: string
+          Compressed: False
+          Location: !Join
+            - ''
+            - - 's3://'
+              - !Ref BucketName
+              - /
+              - Aggregated/mostlikedvideo
