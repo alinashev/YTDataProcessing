@@ -73,7 +73,7 @@
                   "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/leastviewcountsinchannels"
                 }
               },
-              "End": true
+               "End": true
             }
           }
         },
@@ -90,7 +90,7 @@
                   "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/mostsubscribedchannel"
                 }
               },
-              "End": true
+               "End": true
             }
           }
         },
@@ -107,7 +107,7 @@
                   "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/mostcommentsvideo"
                 }
               },
-              "End": true
+               "End": true
             }
           }
         },
@@ -124,7 +124,41 @@
                   "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/mostlikedvideo"
                 }
               },
-              "End": true
+               "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Aggregation5",
+          "States": {
+            "Aggregation5": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "INSERT INTO \"a-database\".\"aggregation5\" SELECT * FROM ((SELECT DISTINCT a.time_id, a.add_date, a.hour, b.comment_count, b.video_id, c.channel_id FROM (SELECT time_id, add_date, hour FROM dimtimevideo WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP))) AS a INNER JOIN (SELECT * FROM factvideo ) AS b ON a.time_id = b.time_id INNER JOIN(SELECT * FROM dimvideo) AS c ON b.video_id = c.video_id) video) v JOIN (SELECT DISTINCT * FROM dimchannel) ch ON ch.channel_id = v.channel_id WHERE 3 > (SELECT COUNT(DISTINCT(comment_count)) FROM (SELECT DISTINCT  a.time_id, a.add_date, a.hour, b.comment_count, b.video_id, c.channel_id FROM ( SELECT time_id, add_date, hour FROM dimtimevideo WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP)) ) AS a INNER JOIN (SELECT * FROM factvideo) AS b ON a.time_id = b.time_id INNER JOIN(SELECT * FROM dimvideo) AS c ON b.video_id = c.video_id) v2 WHERE v.channel_id = v2.channel_id AND v.comment_count < v2.comment_count)",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/for-each-channel-mostcommentsvideo"
+                }
+              },
+               "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Aggregation6",
+          "States": {
+            "Aggregation6": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "INSERT INTO \"a-database\".\"aggregation6\" SELECT * FROM ((SELECT DISTINCT a.time_id, a.add_date, a.hour, b.like_count, b.video_id, c.channel_id FROM (SELECT time_id, add_date, hour FROM dimtimevideo WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP))) AS a INNER JOIN (SELECT * FROM factvideo) AS b ON a.time_id = b.time_id INNER JOIN(SELECT * FROM dimvideo) AS c ON b.video_id = c.video_id) video) v JOIN (SELECT DISTINCT * FROM dimchannel) ch ON ch.channel_id = v.channel_id WHERE 3 > (SELECT COUNT(DISTINCT(like_count)) FROM (SELECT DISTINCT  a.time_id, a.add_date, a.hour, b.like_count, b.video_id, c.channel_id FROM ( SELECT time_id, add_date, hour FROM dimtimevideo WHERE add_date = CURRENT_DATE AND hour = (SELECT EXTRACT(HOUR FROM CURRENT_TIMESTAMP))) AS a INNER JOIN (SELECT * FROM factvideo) AS b ON a.time_id = b.time_id INNER JOIN(SELECT * FROM dimvideo) AS c ON b.video_id = c.video_id) v2 WHERE v.channel_id = v2.channel_id AND v.like_count < v2.like_count)",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/Aggregated/res/for-each-channel-mostlikedvideo"
+                }
+              },
+               "End": true
             }
           }
         }
