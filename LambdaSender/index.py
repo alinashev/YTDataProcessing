@@ -8,5 +8,6 @@ def lambda_handler(event, context):
         tasks.append({i: channel_dict[i]})
 
     return {
+        'statuscode': 200,
         'body': {'taskList': tasks}
     }

@@ -232,6 +232,7 @@ Resources:
             - arn:aws:iam::aws:policy/AWSLambda_FullAccess
             - arn:aws:iam::aws:policy/AmazonS3FullAccess
             - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+            - arn:aws:iam::aws:policy/AmazonSNSFullAccess
           AssumeRolePolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -324,3 +325,15 @@ Resources:
             DefinitionS3Location:
                 Bucket: a-tech-bucket
                 Key: StateMachines/stateMachineDefinition.json
+
+    #SNS
+    #SNSTopic:
+    Topic:
+      Type: AWS::SNS::Topic
+
+    Subscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: alina.a14d@gmail.com
+        Protocol: email
+        TopicArn: !Ref Topic

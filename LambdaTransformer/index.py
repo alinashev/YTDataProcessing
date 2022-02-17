@@ -81,4 +81,6 @@ def lambda_handler(event, context):
     Loader.load("Tables/dimVideo.sql")
     Loader.load("Tables/dimTimeVideo.sql")
 
-    return event
+    return {
+        'statuscode': 200
+    }

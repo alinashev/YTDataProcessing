@@ -31,11 +31,28 @@ def lambda_handler(event, context):
 
     storage: StorageS3 = StorageS3(os.environ.get("BucketName"))
 
-    channel_data = extractor_channels.extract(channel_id)
-    video_data = extractor_videos.extract(channel_id)
+    try:
+        channel_data = extractor_channels.extract(channel_id)
+    except IndexError:
+        return {
+            'statuscode': 403
+        }
+
+    try:
+        video_data = extractor_videos.extract(channel_id)
+    except IndexError:
+        return {
+            'statuscode': 403
+        }
 
     video_id: list = VideoIDParser().parse(video_data, channel_id)
-    category_data = video_category_extractor.extract(video_id)
+
+    try:
+        category_data = video_category_extractor.extract(video_id)
+    except IndexError:
+        return {
+            'statuscode': 403
+        }
 
     file_writer_channels.writing(channel_data)
     file_writer_videos.writing(video_data)
