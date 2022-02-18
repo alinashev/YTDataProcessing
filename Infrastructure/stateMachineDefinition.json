@@ -9,7 +9,50 @@
         "Payload.$": "$",
         "FunctionName": "arn:aws:lambda:us-east-2:062261762656:function:a-sender:$LATEST"
       },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Notify"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout",
+            "Lambda.Unknown",
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
       "Next": "MapLambdaPuller"
+    },
+    "Notify": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 3,
+          "MaxAttempts": 2,
+          "BackoffRate": 1.5
+        }
+      ],
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:us-east-2:062261762656:a-sns-Topic-1V2UESBTJ6QJZ",
+        "Subject": "[ERROR]: Task Failed",
+        "Message.$": "$.error"
+      },
+      "End": true
     },
     "MapLambdaPuller": {
       "Type": "Map",
@@ -28,18 +71,6 @@
               "Payload.$": "$",
               "FunctionName": "arn:aws:lambda:us-east-2:062261762656:function:a-puller:$LATEST"
             },
-            "Retry": [
-              {
-                "ErrorEquals": [
-                  "Lambda.ServiceException",
-                  "Lambda.AWSLambdaException",
-                  "Lambda.SdkClientException"
-                ],
-                "IntervalSeconds": 2,
-                "MaxAttempts": 6,
-                "BackoffRate": 2
-              }
-            ],
             "Next": "LambdaTransformer"
           },
           "LambdaTransformer": {
@@ -50,19 +81,63 @@
               "Payload.$": "$",
               "FunctionName": "arn:aws:lambda:us-east-2:062261762656:function:a-transformer:$LATEST"
             },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "States.Timeout",
+                  "Lambda.Unknown",
+                  "Lambda.ServiceException",
+                  "Lambda.AWSLambdaException",
+                  "Lambda.SdkClientException"
+                ],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 6,
+                "BackoffRate": 2
+              }
+            ],
             "End": true
           }
         }
       },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Notify"
+        }
+      ],
       "Next": "AthenaStartQueryInfo"
     },
     "AthenaStartQueryInfo": {
       "Type": "Parallel",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.error",
+          "Next": "Notify"
+        }
+      ],
       "End": true,
       "Branches": [
         {
-          "StartAt": "Aggregation1",
+          "StartAt": "CreateTable1",
           "States": {
+            "CreateTable1": {
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "CREATE EXTERNAL TABLE IF NOT EXISTS `a-database`.`aggregation1`(time_id string, add_date date, hour int, view_count bigint, channel_id string, channel_name string) LOCATION 's3://a-data-bucket-1/Aggregated/leastviewcountsinchannels'",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/AgTest/Test"
+                }
+              },
+              "Type": "Task",
+              "Next": "Aggregation1"
+            },
             "Aggregation1": {
               "Type": "Task",
               "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
@@ -78,8 +153,20 @@
           }
         },
         {
-          "StartAt": "Aggregation2",
+          "StartAt": "CreateTable2",
           "States": {
+            "CreateTable2": {
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "CREATE EXTERNAL TABLE IF NOT EXISTS `a-database`.`aggregation2`(time_id string, add_date date, hour int, view_count bigint, channel_id string, channel_name string) LOCATION 's3://a-data-bucket-1/Aggregated/leastviewcountsinchannels'",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/AgTest/Test"
+                }
+              },
+              "Type": "Task",
+              "Next": "Aggregation2"
+            },
             "Aggregation2": {
               "Type": "Task",
               "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
@@ -95,8 +182,20 @@
           }
         },
         {
-          "StartAt": "Aggregation3",
+          "StartAt": "CreateTable3",
           "States": {
+            "CreateTable3": {
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "CREATE EXTERNAL TABLE IF NOT EXISTS  `a-database`.`aggregation3`(time_id string,add_date date, hour int, comment_count bigint, video_id string, title string)LOCATION 's3://a-data-bucket-1/Aggregated/mostcommentsvideo'",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/AgTest/Test"
+                }
+              },
+              "Type": "Task",
+              "Next": "Aggregation3"
+            },
             "Aggregation3": {
               "Type": "Task",
               "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
@@ -112,8 +211,20 @@
           }
         },
         {
-          "StartAt": "Aggregation4",
+          "StartAt": "CreateTable4",
           "States": {
+            "CreateTable4": {
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "CREATE EXTERNAL TABLE IF NOT EXISTS  `a-database`.`aggregation4`(time_id string, add_date date, hour int, like_count bigint, video_id string, title string) LOCATION 's3://a-data-bucket-1/Aggregated/mostlikedvideo'",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/AgTest/Test"
+                }
+              },
+              "Type": "Task",
+              "Next": "Aggregation4"
+            },
             "Aggregation4": {
               "Type": "Task",
               "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
@@ -129,8 +240,20 @@
           }
         },
         {
-          "StartAt": "Aggregation5",
+          "StartAt": "CreateTable5",
           "States": {
+            "CreateTable5": {
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "CREATE EXTERNAL TABLE IF NOT EXISTS  `a-database`.`aggregation5`(time_id string, add_date date, hour int, comment_count bigint, video_id string, channel_id string, channel_name string) LOCATION 's3://a-data-bucket-1/Aggregated/for-each-channel-mostcommentsvideo'",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/AgTest/Test"
+                }
+              },
+              "Type": "Task",
+              "Next": "Aggregation5"
+            },
             "Aggregation5": {
               "Type": "Task",
               "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
@@ -146,8 +269,20 @@
           }
         },
         {
-          "StartAt": "Aggregation6",
+          "StartAt": "CreateTable6",
           "States": {
+            "CreateTable6": {
+              "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
+              "Parameters": {
+                "QueryString": "CREATE EXTERNAL TABLE IF NOT EXISTS  `a-database`.`aggregation6`(time_id string, add_date date, hour int, like_count bigint, video_id string, channel_id string, channel_name string) LOCATION 's3://a-data-bucket-1/Aggregated/for-each-channel-mostlikedvideo'",
+                "WorkGroup": "primary",
+                "ResultConfiguration": {
+                  "OutputLocation": "s3://a-data-bucket-1/AgTest/Test"
+                }
+              },
+              "Type": "Task",
+              "Next": "Aggregation6"
+            },
             "Aggregation6": {
               "Type": "Task",
               "Resource": "arn:aws:states:::athena:startQueryExecution.sync",
