@@ -1,0 +1,339 @@
+Parameters:
+    # Bucket
+    BucketName:
+        Description: S3 Bucket name
+        Type: String
+
+    # Lambda Functions:
+    LambdaSenderName:
+        Description: Lambda function name
+        Type: String
+
+    LambdaPullerName:
+        Description: Lambda function name
+        Type: String
+
+    LambdaTransformerName:
+        Description: Lambda function name
+        Type: String
+
+        #DataBase:
+    DatabaseName:
+        Description: Database name
+        Type: String
+
+Resources:
+    #S3 Bucket:
+    S3Bucket:
+        Type: AWS::S3::Bucket
+        Properties:
+                  BucketName: !Ref BucketName
+
+    #Lambda Functions:
+    LambdaSender:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: !Ref LambdaSenderName
+            Code:
+                S3Bucket: a-tech-bucket
+                S3Key: Default/index.zip
+            Handler: index.lambda_handler
+            MemorySize: 128
+            Role: !GetAtt RoleLambdaSender.Arn
+            Runtime: python3.9
+            Timeout: 60
+
+    LambdaPuller:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: !Ref LambdaPullerName
+            Handler: index.lambda_handler
+            Role: !GetAtt RoleLambdaPuller.Arn
+            Code:
+                S3Bucket: a-tech-bucket
+                S3Key: Default/index.zip
+            Environment:
+                Variables:
+                    BucketName: !Ref BucketName
+            Timeout: 60
+            MemorySize: 128
+            Runtime: python3.9
+            Layers:
+                - !Ref LayerGoogleAPI
+
+    LambdaTransformer:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: !Ref LambdaTransformerName
+            Handler: index.lambda_handler
+            Role: !GetAtt RoleLambdaTransformer.Arn
+            Code:
+                S3Bucket: a-tech-bucket
+                S3Key: Default/index.zip
+            Environment:
+                Variables:
+                    BucketName: !Ref BucketName
+                    DatabaseName: !Ref DatabaseName
+            Timeout: 120
+            MemorySize: 256
+            Runtime: python3.9
+            Layers:
+                - !Ref LayerPyAthena
+                - !Ref LayerPyArrow
+                - !Ref LayerPandas
+                - !Ref LayerNumpy
+
+    #Layers:
+    LayerGoogleAPI:
+        Type: AWS::Lambda::LayerVersion
+        Properties:
+            LayerName: a-google-api
+            Content:
+                S3Bucket: a-tech-bucket
+                S3Key: Layers/GoogleAPI/python.zip
+            CompatibleArchitectures:
+                - x86_64
+            CompatibleRuntimes:
+                - python3.9
+                - python3.8
+                - python3.7
+                - python3.6
+
+    LayerPyAthena:
+        Type: AWS::Lambda::LayerVersion
+        Properties:
+            LayerName: a-pyathena
+            Content:
+                S3Bucket: a-tech-bucket
+                S3Key: Layers/Athena/python.zip
+            CompatibleArchitectures:
+                - x86_64
+            CompatibleRuntimes:
+                - python3.9
+                - python3.8
+                - python3.7
+                - python3.6
+
+    LayerPyArrow:
+        Type: AWS::Lambda::LayerVersion
+        Properties:
+            LayerName: a-pyarrow
+            Content:
+                S3Bucket: a-tech-bucket
+                S3Key: Layers/Pyarrow/python.zip
+            CompatibleArchitectures:
+                - x86_64
+            CompatibleRuntimes:
+                - python3.9
+
+    LayerPandas:
+        Type: AWS::Lambda::LayerVersion
+        Properties:
+            LayerName: a-pandas
+            Content:
+                S3Bucket: a-tech-bucket
+                S3Key: Layers/Pandas/python.zip
+            CompatibleArchitectures:
+                - x86_64
+            CompatibleRuntimes:
+                - python3.9
+
+    LayerNumpy:
+        Type: AWS::Lambda::LayerVersion
+        Properties:
+            LayerName: a-numpy
+            Content:
+                S3Bucket: a-tech-bucket
+                S3Key: Layers/Numpy/python.zip
+            CompatibleArchitectures:
+                - x86_64
+            CompatibleRuntimes:
+                - python3.9
+
+ #Roles:
+        #Roles for Lambda Functions:
+    RoleLambdaSender:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                      - Effect: Allow
+                        Principal:
+                              Service:
+                                - lambda.amazonaws.com
+                        Action:
+                            - 'sts:AssumeRole'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+    RoleLambdaPuller:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                      - Effect: Allow
+                        Principal:
+                              Service:
+                                - lambda.amazonaws.com
+                        Action:
+                            - 'sts:AssumeRole'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+    RoleLambdaTransformer:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                      - Effect: Allow
+                        Principal:
+                              Service:
+                                - lambda.amazonaws.com
+                        Action:
+                            - 'sts:AssumeRole'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+                - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+                - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+
+    RoleLambdaAggregator:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service:
+                            - lambda.amazonaws.com
+                      Action:
+                        - 'sts:AssumeRole'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonS3FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+                - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+                - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+
+        #Role for StateMachine:
+    RoleStateMachine:
+        Type: AWS::IAM::Role
+        Properties:
+          ManagedPolicyArns:
+            - arn:aws:iam::aws:policy/AWSLambdaExecute
+            - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+            - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+            - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+            - arn:aws:iam::aws:policy/AmazonS3FullAccess
+            - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+            - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+          AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Principal:
+                  Service:
+                      - Fn::Sub: "states.${AWS::Region}.amazonaws.com"
+                Action:
+                  - "sts:AssumeRole"
+          Policies:
+            -
+              PolicyName: StatesExecutionPolicy
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  -
+                    Effect: "Allow"
+                    Action: "lambda:InvokeFunction"
+                    Resource:
+                        - !GetAtt LambdaSender.Arn
+                        - !GetAtt LambdaPuller.Arn
+                        - !GetAtt LambdaTransformer.Arn
+                        - !GetAtt LambdaAggregator.Arn
+            -
+              PolicyName: LambdaInvokePolicy
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  -
+                    Effect: "Allow"
+                    Action: "lambda:InvokeAsync"
+                    Resource: "*"
+
+
+
+    RoleScheduledEvent:
+        Type: AWS::IAM::Role
+        Properties:
+          AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Principal:
+                  Service:
+                      - Fn::Sub: "events.amazonaws.com"
+                Action:
+                  - "sts:AssumeRole"
+          Policies:
+            -
+              PolicyName: StateMachineExecutionPolicy
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  -
+                    Effect: "Allow"
+                    Action: "states:StartExecution"
+                    Resource:
+                      - !Ref StateMachine
+
+#Events/Rule:
+    ScheduledEventRule:
+        Type: "AWS::Events::Rule"
+        Properties:
+            State: ENABLED
+            ScheduleExpression: rate(1 hour)
+            Targets:
+            - Arn:
+                  Fn::GetAtt:
+                  - StateMachine
+                  - Arn
+              Id: !GetAtt StateMachine.Name
+              RoleArn: !GetAtt RoleScheduledEvent.Arn
+
+    #DataBase:
+    AthenaDataBase:
+        Type: AWS::Glue::Database
+        Properties:
+            CatalogId: !Ref "AWS::AccountId"
+            DatabaseInput:
+                Name: !Ref DatabaseName
+
+    #StateMachine
+    StateMachine:
+        Type: AWS::StepFunctions::StateMachine
+        Properties:
+            StateMachineName: !Sub "${AWS::StackName}-StateMachine"
+            RoleArn: !GetAtt RoleStateMachine.Arn
+            DefinitionS3Location:
+                Bucket: a-tech-bucket
+                Key: StateMachines/stateMachineDefinition.json
+
+    #SNS
+    #SNSTopic:
+    Topic:
+      Type: AWS::SNS::Topic
+
+    Subscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: alina.a14d@gmail.com
+        Protocol: email
+        TopicArn: !Ref Topic

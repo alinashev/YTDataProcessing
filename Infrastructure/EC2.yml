@@ -1,0 +1,100 @@
+Resources:
+    EC2Instace:
+        Type: AWS::EC2::Instance
+        Properties:
+            InstanceType: t2.micro
+            ImageId: "ami-0e6dc5b97821dacfc"
+            KeyName: "key1"
+            SubnetId: !Ref SubnetA
+            IamInstanceProfile: !Ref InstanceProfile
+            SecurityGroupIds:
+                - Ref: InstanceSecurityGroup
+            Tags:
+                -
+                    Key: Name
+                    Value: A-cf-instance1
+
+    VPC:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock: 172.31.0.0/16
+            EnableDnsSupport: 'true'
+            EnableDnsHostnames: 'true'
+            Tags:
+            - Key: Name
+              Value: A-cf1
+    
+    InternetGateway:
+        Type: AWS::EC2::InternetGateway
+  
+    VPCGatewayAttachment:
+        Type: AWS::EC2::VPCGatewayAttachment
+        Properties:
+            VpcId: !Ref VPC
+            InternetGatewayId: !Ref InternetGateway
+            
+    SubnetA:
+        Type: AWS::EC2::Subnet
+        Properties:
+            AvailabilityZone: us-east-2b
+            VpcId: !Ref VPC
+            CidrBlock: 172.31.0.0/24
+            MapPublicIpOnLaunch: true
+      
+    RouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref VPC
+          
+    InternetRoute:
+        Type: AWS::EC2::Route
+        DependsOn: InternetGateway
+        Properties:
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId: !Ref InternetGateway
+            RouteTableId: !Ref RouteTable
+    
+    SubnetARouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref RouteTable
+            SubnetId: !Ref SubnetA
+
+    InstanceSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Base Security Group
+            VpcId: !Ref VPC
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  CidrIp: 0.0.0.0/0
+                  FromPort: 22
+                  ToPort: 22
+                  
+                - IpProtocol: all
+                  CidrIp: 0.0.0.0/0
+                  FromPort: 0
+                  ToPort: 65535
+                  
+    InstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties: 
+            InstanceProfileName: nstance-profile
+            Roles: 
+            - !Ref EC2Role
+            
+    EC2Role:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: A-EC2FullAccesCF
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                      - Effect: Allow
+                        Principal:
+                              Service:
+                                - ec2.amazonaws.com
+                        Action:
+                            - 'sts:AssumeRole'
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AmazonEC2FullAccess

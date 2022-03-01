@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+        TechnicalBucket = "a-tech-bucket"
+
+        LambdaSenderName = "a-sender"
+        LambdaPullerName = "a-puller"
+        LambdaTransformerName = "a-transformer"
+        LambdaAggregatorName = "a-aggregator"
+
+    }
+    stages {
+        stage('Submit Lambda Code') {
+            steps {
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh  '''
+                    cd LambdaSender && zip -r9 index.zip .
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaSenderCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name $LambdaSenderName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
+                      --s3-key LambdaSenderCode/index.zip
+
+                    cd ..
+
+                    cd LambdaPuller && zip -r9 index.zip .
+                    aws s3 cp s3://a-tech-bucket/Google-API-key/keys.py .
+                    zip index.zip keys.py
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaPullerCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name $LambdaPullerName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
+                      --s3-key LambdaPullerCode/index.zip
+
+                    cd ..
+
+                    cd LambdaTransformer && zip -r9 index.zip .
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaTransformerCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name $LambdaTransformerName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
+                      --s3-key LambdaTransformerCode/index.zip
+
+                    cd ..
+
+                    cd LambdaAggregator && zip -r9 index.zip .
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaAggregatorCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name $LambdaAggregatorName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
+                      --s3-key LambdaAggregatorCode/index.zip
+                    '''
+                }
+              }
+             }
+           }
+         }
