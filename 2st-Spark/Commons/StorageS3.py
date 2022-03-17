@@ -30,3 +30,10 @@ class StorageS3:
             if obj.key[-1] == '/':
                 continue
             self.download_file(obj.key, path)
+
+    def upload(self, directory: str, file: str) -> None:
+        self.s3.meta.client.upload_file(file, self.bucket_name,
+                                        '{directory}/{name}'.format(
+                                            directory=directory,
+                                            name=file)
+                                        )

@@ -1,0 +1,1 @@
+SELECT * FROM {temp_view_name} ORDER BY subscriber_count DESC LIMIT 3
