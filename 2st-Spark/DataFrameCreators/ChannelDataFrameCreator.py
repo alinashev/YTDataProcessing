@@ -1,30 +1,29 @@
-import os
 from typing import Any
+
 from pyspark.sql import SparkSession
-from pyspark.sql.utils import AnalysisException
-from Commons.Reader import Reader
-from Commons.Unifier import Unifier
+from pyspark.sql.functions import explode, lit
+
+from Commons.DataVersion import DataVersion
 from DataFrameCreators.GeneralDataFrameCreator import GeneralDataFrameCreator
-from Parsers.ChannelJsonParser import ChannelJsonParser
 
 
 class ChannelDataFrameCreator(GeneralDataFrameCreator):
 
-    def create(self, spark_session: SparkSession, schema: Any, folder_name: str) -> Any:
-        general_channel_data_frame: Any = schema
-        try:
-            for filename in os.listdir(folder_name):
-                try:
-                    channel_json: ChannelJsonParser = ChannelJsonParser()
-                    single_channel_data_frame: Any = channel_json.parse(
-                        Reader.read_json(spark_session, os.path.join(folder_name, filename)),
-                        schema)
-                except AnalysisException:
-                    print("AnalysisException: " + filename)
-                    continue
-                general_channel_data_frame = Unifier.union_data_frame(
-                    [general_channel_data_frame, single_channel_data_frame])
-            return general_channel_data_frame
-        except FileNotFoundError:
-            print("The folder does not exist.")
-        return general_channel_data_frame
+    def __init__(self, spark_session: SparkSession, data_source: str, data_version: DataVersion):
+        self.df = None
+        self.data_source = data_source
+        self.spark_session = spark_session
+        self.data_version = data_version
+
+    def create(self) -> Any:
+        self.df = self.spark_session.read.json(
+            self.data_source, multiLine="true").select(
+            explode("info.items").alias("items")).select("items.id",
+                                                         "items.statistics.subscriberCount",
+                                                         "items.statistics.videoCount",
+                                                         "items.statistics.viewCount"
+                                                         ) \
+            .withColumn("add_time", lit(self.data_version.get_date() + "-" + self.data_version.get_hour())) \
+            .withColumn("add_date", lit(self.data_version.get_date())) \
+            .withColumn("add_hour", lit(self.data_version.get_hour())).dropna()
+        return self.df

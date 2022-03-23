@@ -1,18 +1,18 @@
-import os
-
 from pyspark.sql import SparkSession
 from Aggregation.Aggregator import Aggregator
 from Commons.DataVersion import DataVersion
 from Commons.StorageS3 import StorageS3
 from DataFrameCreators.ChannelDataFrameCreator import ChannelDataFrameCreator
 from DataFrameCreators.VideoDataFrameCreator import VideoDataFrameCreator
-from SchemaBuilders.ChannelSchemaBuilder import ChannelSchemaBuilder
-from SchemaBuilders.VideoSchemaBuilder import VideoSchemaBuilder
 
 
 def main():
-    spark_session: SparkSession = SparkSession.builder.appName("App").master("local[*]"). \
-        config("spark.driver.memory", "1g").getOrCreate()
+    spark_session: SparkSession = SparkSession.builder.appName("App").master("local[8]"). \
+        config("spark.driver.memory", "1g"). \
+        config("spark.executor.memory", "1g"). \
+        config("spark.memory.offHeap.enabled", True). \
+        config("spark.memory.offHeap.size", "8g"). \
+        getOrCreate()
 
     data_version: DataVersion = DataVersion()
     storage: StorageS3 = StorageS3()
@@ -29,13 +29,11 @@ def main():
     storage.download_folder(video_data_s3_folder, video_data_folder_name)
     storage.download_folder(channel_data_s3_folder, channel_data_folder_name)
 
-    video_schema: VideoSchemaBuilder = VideoSchemaBuilder().build(spark_session)
-    video_df_creator = VideoDataFrameCreator()
-    video_df = video_df_creator.create(spark_session, video_schema, video_data_folder_name)
+    video_data_source = video_data_folder_name + "/*.json"
+    video_df = VideoDataFrameCreator(spark_session, video_data_source, data_version).create()
 
-    channel_schema: ChannelSchemaBuilder = ChannelSchemaBuilder().build(spark_session)
-    channel_df_creator = ChannelDataFrameCreator()
-    channel_df = channel_df_creator.create(spark_session, channel_schema, channel_data_folder_name)
+    channel_data_source = channel_data_folder_name + "/*.json"
+    channel_df = ChannelDataFrameCreator(spark_session, channel_data_source, data_version).create()
 
     most_comments_v_agg_dir = "SparkAggregation" + "/" + "most-comments-v" + "/" + data_version.get_date()
     most_liked_v_agg_file_dir = "SparkAggregation" + "/" + "most-liked-v" + "/" + data_version.get_date()
@@ -73,23 +71,27 @@ def main():
     storage.download_folder(most_comments_v_agg_dir, data_for_daily_most_comment)
     storage.download_folder(most_liked_v_agg_file_dir, data_for_daily_most_liked)
 
-    daily_most_comment_file_list = os.listdir(data_for_daily_most_comment)
-    video_path_list = list(
-        map(lambda file: os.path.join(data_for_daily_most_comment, file), daily_most_comment_file_list))
-    daily_m_comments_df = spark_session.read.parquet(*video_path_list)
+    daily_most_comments_v_agg_dir = "DailySparkAggregation" + "/" + "daily-most-comments-v" + "/" +\
+                                    data_version.get_date()
+    daily_most_liked_v_agg_file_dir = "DailySparkAggregation" + "/" + "daily-most-liked-v" + "/" +\
+                                      data_version.get_date()
 
+    daily_most_comments_v_agg_file = "daily-m-comm-" + data_version.get_hour() + ".parquet"
+    daily_most_liked_v_agg_file = "daily-m-like-" + data_version.get_hour() + ".parquet"
+
+    daily_m_comments_df = spark_session.read.format("parquet").load("DailyAggregation/most_comments")
     daily_most_comments_v_df = Aggregator.aggregate(spark_session, daily_m_comments_df,
                                                     open("Aggregation/Queries/dailyMostCommentVideo.sql", 'r').read())
-    daily_most_comments_v_df.show()
 
-    daily_most_liked_file_list = os.listdir(data_for_daily_most_comment)
-    video_path_list = list(
-        map(lambda file: os.path.join(data_for_daily_most_comment, file), daily_most_liked_file_list))
-    daily_m_liked_df = spark_session.read.parquet(*video_path_list)
+    daily_most_comments_v_df.toPandas().to_parquet(daily_most_comments_v_agg_file, engine='pyarrow')
+    storage.upload(daily_most_comments_v_agg_dir, daily_most_comments_v_agg_file)
 
+    daily_m_liked_df = spark_session.read.format("parquet").load("DailyAggregation/most_liked")
     daily_most_liked_v_df = Aggregator.aggregate(spark_session, daily_m_liked_df,
                                                  open("Aggregation/Queries/dailyMostLikedVideo.sql", 'r').read())
-    daily_most_liked_v_df.show()
+
+    daily_most_liked_v_df.toPandas().to_parquet(daily_most_liked_v_agg_file, engine='pyarrow')
+    storage.upload(daily_most_liked_v_agg_file_dir, daily_most_liked_v_agg_file)
 
 
 if __name__ == '__main__':

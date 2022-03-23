@@ -1,1 +1,1 @@
-SELECT * FROM {temp_view_name} ORDER BY comment_count DESC LIMIT 3
+SELECT * FROM {temp_view_name} ORDER BY commentCount DESC LIMIT 3

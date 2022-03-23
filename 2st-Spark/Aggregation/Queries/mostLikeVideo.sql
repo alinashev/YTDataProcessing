@@ -1,1 +1,1 @@
-SELECT * FROM {temp_view_name} ORDER BY like_count DESC LIMIT 3
+SELECT * FROM {temp_view_name} ORDER BY likeCount DESC LIMIT 3

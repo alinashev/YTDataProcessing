@@ -1,1 +1,1 @@
-SELECT * FROM {temp_view_name} ORDER BY view_count ASC LIMIT 3
+SELECT * FROM {temp_view_name} ORDER BY viewCount ASC LIMIT 3

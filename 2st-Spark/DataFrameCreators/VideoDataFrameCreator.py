@@ -1,30 +1,31 @@
-import os
 from typing import Any
+
 from pyspark.sql import SparkSession
-from pyspark.sql.utils import AnalysisException
+from pyspark.sql.functions import explode, lit
+
+from Commons.DataVersion import DataVersion
 from DataFrameCreators.GeneralDataFrameCreator import GeneralDataFrameCreator
-from Parsers.VideoJsonParser import VideoJsonParser
-from Commons.Reader import Reader
-from Commons.Unifier import Unifier
 
 
 class VideoDataFrameCreator(GeneralDataFrameCreator):
 
-    def create(self, spark_session: SparkSession, schema: Any, folder_name: str) -> Any:
-        general_video_data_frame: Any = schema
-        try:
-            for filename in os.listdir(folder_name):
-                try:
-                    video_json: VideoJsonParser = VideoJsonParser()
-                    single_video_data_frame: Any = video_json.parse(
-                        Reader.read_json(spark_session, os.path.join(folder_name, filename)),
-                        schema)
-                except AnalysisException:
-                    print("AnalysisException: " + filename)
-                    continue
-                general_video_data_frame = Unifier.union_data_frame(
-                    [general_video_data_frame, single_video_data_frame])
-            return general_video_data_frame
-        except FileNotFoundError:
-            print("The folder does not exist.")
-        return general_video_data_frame
+    def __init__(self, spark_session: SparkSession, data_source: str, data_version: DataVersion) -> None:
+        self.df = None
+        self.data_source = data_source
+        self.spark_session = spark_session
+        self.data_version = data_version
+
+    def create(self) -> Any:
+        self.df = self.spark_session.read.json(
+            self.data_source, multiLine="true").select(
+            explode("info.items").alias("items")).select("items.id", "items.snippet.channelTitle",
+                                                         "items.snippet.channelId",
+                                                         "items.snippet.categoryId",
+                                                         "items.statistics.commentCount",
+                                                         "items.statistics.likeCount",
+                                                         "items.statistics.viewCount"
+                                                         ) \
+            .withColumn("add_time", lit(self.data_version.get_date() + "-" + self.data_version.get_hour())) \
+            .withColumn("add_date", lit(self.data_version.get_date())) \
+            .withColumn("add_hour", lit(self.data_version.get_hour())).dropna()
+        return self.df

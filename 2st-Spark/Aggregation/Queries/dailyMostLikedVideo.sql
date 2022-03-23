@@ -1,1 +1,1 @@
-SELECT DISTINCT  video_id, time_id, MAX(like_count)  FROM {temp_view_name} GROUP BY time_id, video_id ORDER BY time_id
+SELECT add_date, id, MAX(likeCount) FROM {temp_view_name} GROUP BY add_date, id
