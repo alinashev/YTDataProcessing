@@ -11,6 +11,7 @@ class Executor:
 
     def execute(self, s3_folder, data_source, query, file, dir, data_type=None, columns=None) -> None:
         self.storage.download_folder(s3_folder, data_source)
+        print("DOWNLOADED")
         df = DataFrameCreator(self.spark_session, data_source, self.data_version, data_type, columns).create()
         aggregated_df = Aggregator.aggregate(self.spark_session, df, open(query, 'r').read())
         aggregated_df.toPandas().to_parquet(file, engine='pyarrow')
