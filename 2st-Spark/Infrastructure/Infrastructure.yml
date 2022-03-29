@@ -1,0 +1,298 @@
+Parameters:
+  # Bucket
+  BucketName:
+    Description: S3 Bucket name
+    Type: String
+
+  # Lambda Functions:
+  LambdaSenderName:
+    Description: Lambda function name
+    Type: String
+
+  LambdaPullerName:
+    Description: Lambda function name
+    Type: String
+
+    #DataBase:
+  DatabaseName:
+    Description: Database name
+    Type: String
+
+  ClusterName:
+    Description: Cluster name
+    Type: String
+
+Resources:
+  #S3 Bucket:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+
+  #Lambda Functions:
+  LambdaSender:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaSenderName
+      Code:
+        S3Bucket: a-tech-bucket
+        S3Key: Default/index.zip
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt RoleLambdaSender.Arn
+      Runtime: python3.9
+      Timeout: 60
+
+  LambdaPuller:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaPullerName
+      Handler: index.lambda_handler
+      Role: !GetAtt RoleLambdaPuller.Arn
+      Code:
+        S3Bucket: a-tech-bucket
+        S3Key: Default/index.zip
+      Environment:
+        Variables:
+          BucketName: !Ref BucketName
+      Timeout: 60
+      MemorySize: 128
+      Runtime: python3.9
+      Layers:
+        - !Ref LayerGoogleAPI
+
+  #Layers:
+  LayerGoogleAPI:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: a-google-api
+      Content:
+        S3Bucket: a-tech-bucket
+        S3Key: Layers/GoogleAPI/python.zip
+      CompatibleArchitectures:
+        - x86_64
+      CompatibleRuntimes:
+        - python3.9
+        - python3.8
+        - python3.7
+        - python3.6
+
+    #Roles:
+    #Roles for Lambda Functions:
+  RoleLambdaSender:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+  RoleLambdaPuller:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+    #Role for StateMachine:
+  RoleStateMachine:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/AmazonEMRFullAccessPolicy_v2
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - Fn::Sub: "states.${AWS::Region}.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "lambda:InvokeFunction"
+                Resource:
+                  - !GetAtt LambdaSender.Arn
+                  - !GetAtt LambdaPuller.Arn
+        -
+          PolicyName: LambdaInvokePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "lambda:InvokeAsync"
+                Resource: "*"
+
+
+
+  RoleScheduledEvent:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - Fn::Sub: "events.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: StateMachineExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "states:StartExecution"
+                Resource:
+                  - !Ref StateMachine
+
+  #Events/Rule:
+  ScheduledEventRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      State: ENABLED
+      ScheduleExpression: rate(1 hour)
+      Targets:
+        - Arn:
+            Fn::GetAtt:
+              - StateMachine
+              - Arn
+          Id: !GetAtt StateMachine.Name
+          RoleArn: !GetAtt RoleScheduledEvent.Arn
+
+  # Role for EMR instances
+  RoleEC2:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role
+
+  # Role for EMR cluster
+  RoleEMR:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2008-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: elasticmapreduce.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole'
+
+  #DataBase:
+  AthenaDataBase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref "AWS::AccountId"
+      DatabaseInput:
+        Name: !Ref DatabaseName
+
+  #StateMachine
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "${AWS::StackName}-StateMachine"
+      RoleArn: !GetAtt RoleStateMachine.Arn
+      DefinitionS3Location:
+        Bucket: a-tech-bucket
+        Key: StateMachines/stateMachineDef.json
+
+  #SNS
+  #SNSTopic:
+  Topic:
+    Type: AWS::SNS::Topic
+
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: alina.a14d@gmail.com
+      Protocol: email
+      TopicArn: !Ref Topic
+
+  #EMR cluster:
+  Cluster:
+    Type: AWS::EMR::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      JobFlowRole: !Ref InstanceProfile
+      ServiceRole: !Ref RoleEMR
+      ReleaseLabel: emr-5.34.0
+      Applications:
+        - Name: Hadoop
+        - Name: Hue
+        - Name: Hive
+        - Name: Pig
+        - Name: Spark
+        - Name: HBase
+        - Name: ZooKeeper
+
+      Instances:
+        MasterInstanceFleet:
+          Name: Master
+          TargetOnDemandCapacity: 1
+          InstanceTypeConfigs:
+            - InstanceType: m5.xlarge
+        CoreInstanceFleet:
+          Name: Core
+          TargetSpotCapacity: 1
+          InstanceTypeConfigs:
+            - InstanceType: m5.xlarge
+        Ec2KeyName: "key1"
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref RoleEC2
