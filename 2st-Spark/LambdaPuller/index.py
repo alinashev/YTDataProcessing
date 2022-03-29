@@ -1,3 +1,5 @@
+import os
+
 from Commons.DataVersion import DataVersion
 from Commons.StorageS3 import StorageS3
 from Executor import Executor
@@ -9,7 +11,7 @@ def lambda_handler(event, context):
 
     channel: dict = {name: id}
     data_version: DataVersion = DataVersion()
-    storage: StorageS3 = StorageS3()
+    storage: StorageS3 = StorageS3(os.environ.get("BucketName"))
 
     executor: Executor = Executor(data_version)
     try:
