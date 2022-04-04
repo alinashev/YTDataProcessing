@@ -8,8 +8,8 @@ class JsonFormatter:
 
     @staticmethod
     def get_channel_json(channel: list, channel_data: list) -> dict:
-        channel_id: dict = {"channelName": [*channel][0]}
-        values: dict = {"info": channel_data}
+        channel_id: dict = {"id": channel[0]}
+        values: dict = {"info": channel_data[0]}
         return dict({**channel_id, **values})
 
     @staticmethod
