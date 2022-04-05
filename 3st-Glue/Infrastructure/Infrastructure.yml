@@ -271,12 +271,12 @@ Resources:
     Properties:
       TopicName: !Ref TopicName
 
-    Subscription:
-      Type: AWS::SNS::Subscription
-      Properties:
-        Endpoint: alina.a14d@gmail.com
-        Protocol: email
-        TopicArn: !Ref Topic
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: alina.a14d@gmail.com
+      Protocol: email
+      TopicArn: !Ref Topic
 
   #Glue
 
