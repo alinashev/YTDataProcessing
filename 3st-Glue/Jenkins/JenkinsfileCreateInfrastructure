@@ -11,6 +11,7 @@ pipeline
         StateMachineName = "aStateMachine"
         JobName = "a-job"
         CrawlerName = "a-aggregated-data"
+        TopicName = "ErrorTopic"
     }
     stages
     {
@@ -43,7 +44,8 @@ pipeline
                        ParameterKey=DatabaseName,ParameterValue=$DatabaseName \
                        ParameterKey=StateMachineName,ParameterValue=$StateMachineName \
                        ParameterKey=JobName,ParameterValue=$JobName \
-                       ParameterKey=CrawlerName,ParameterValue=CrawlerName \
+                       ParameterKey=CrawlerName,ParameterValue=$CrawlerName \
+                       ParameterKey=TopicName,ParameterValue=$TopicName \
                     '''
                 }
             }

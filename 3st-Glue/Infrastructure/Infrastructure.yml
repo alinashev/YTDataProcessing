@@ -33,6 +33,9 @@ Parameters:
     Description: Crawler name
     Type: String
 
+  TopicName:
+    Description: Topic name
+    Type: String
 
 Resources:
   #S3 Bucket:
@@ -265,13 +268,15 @@ Resources:
   #SNSTopic:
   Topic:
     Type: AWS::SNS::Topic
-
-  Subscription:
-    Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: alina.a14d@gmail.com
-      Protocol: email
-      TopicArn: !Ref Topic
+      TopicName: !Ref TopicName
+
+    Subscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: alina.a14d@gmail.com
+        Protocol: email
+        TopicArn: !Ref Topic
 
   #Glue
 
