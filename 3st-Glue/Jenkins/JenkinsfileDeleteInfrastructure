@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+        BucketName = "a-data-bucket-1"
+    }
+    stages {
+        stage('Emptying a bucket'){
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                    sh '''
+                        aws s3 rm s3://$BucketName --recursive
+                        '''
+                }
+            }
+        }
+        stage('Deleting Stack') {
+            steps {
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                    sh '''
+                        aws cloudformation delete-stack \
+                          --stack-name $StackName \
+                          --region $Region
+                        '''
+                }
+            }
+        }
+        stage('Stack delete complete'){
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                    sh '''
+                        aws cloudformation wait stack-delete-complete \
+                          --stack-name $StackName \
+                          --region $Region
+                        '''
+                }
+            }
+        }
+    }
+}
