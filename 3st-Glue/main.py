@@ -7,7 +7,7 @@ from awsglue.job import Job
 
 from Commons.Configurator import Configurator
 from Commons.DataVersion import DataVersion
-from Commons.Executor import Executor
+from Auxiliary.Executor import Executor
 
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])

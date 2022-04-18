@@ -20,7 +20,7 @@ class DataFrameCreator:
         if self.param == "raw":
             self.df = self.spark_session.read.json(
                 self.data_source + "/*.json", multiLine="true").select(
-                explode("info.items").alias("items")).select(self.columns)\
+                explode("info.items").alias("items")).select(self.columns) \
                 .withColumn("time", lit(self.data_version.get_date() + "-" + self.data_version.get_hour())) \
                 .withColumn("year", lit(self.data_version.get_year())) \
                 .withColumn("month", lit(self.data_version.get_month())) \

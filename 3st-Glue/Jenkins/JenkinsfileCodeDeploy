@@ -28,8 +28,13 @@ pipeline {
                       --s3-key LambdaSenderCode/index.zip
 
                     cd ../..
+                    ls
 
-                    cd 3st-Glue/LambdaPuller && zip -r9 index.zip .
+                    cd 3st-Glue/LambdaPuller
+                    zip -r ../index.zip *
+                    ls
+                    cd ..
+                    zip -r index.zip Commons/*
                     aws s3 cp s3://a-tech-bucket/Google-API-key/keys.py .
                     zip index.zip keys.py
                     aws s3 cp index.zip s3://a-tech-bucket/LambdaPullerCode/index.zip
@@ -40,14 +45,18 @@ pipeline {
                       --region $Region \
                       --s3-bucket $TechnicalBucket\
                       --s3-key LambdaPullerCode/index.zip
-
                     cd ..
 
+                    ls
+                    cd 3st-Glue
                     zip -r extra.zip Commons/*
+                    zip -r extra.zip Auxiliary/*
                     aws s3 cp extra.zip s3://a-tech-bucket/Glue/Extra/extra.zip
                     rm extra.zip
+                    cd ..
 
-
+                    ls
+                    cd 3st-Glue
                     aws s3 cp main.py s3://a-tech-bucket/Glue/Script/main.py
                 '''
                 }
