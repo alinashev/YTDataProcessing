@@ -13,6 +13,7 @@ class Executor:
         self.data_version = data_version
 
     def execute(self, channel: dict, storage: StorageS3, data_type: str = None) -> None:
+        configurator: Configurator = Configurator(self.data_version)
         if data_type is "channel":
             items: list = list(channel.values())
             data: list = DataExtractor("channel").extract(items)
@@ -27,7 +28,7 @@ class Executor:
 
             data: list = DataExtractor().extract(items)
         json: Any = JsonFormatter().form(items, data, data_type)
-        writer: FileWriter = FileWriter('/tmp/' + Configurator.get_file_name(list(channel.values())[0], data_type))
+        writer: FileWriter = FileWriter('/tmp/' + configurator.get_file_name(list(channel.values())[0], data_type))
         writer.writing(json)
-        storage.upload(writer.get_path(), Configurator.get_dir_name(self.data_version, data_type))
+        storage.upload(writer.get_path(), configurator.get_dir_name(data_type))
         print("UPLOAD")
