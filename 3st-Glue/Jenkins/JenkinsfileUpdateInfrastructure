@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+        ChangeSetName = "a-stack-update1"
+
+        BucketName = "a-data-bucket-1"
+        LambdaSenderName = "a-sender"
+        LambdaPullerName = "a-puller"
+        DatabaseName = "adb"
+        StateMachineName = "aStateMachine"
+        JobName = "a-job"
+        CrawlerName = "a-aggregated-data"
+        TopicName = "ErrorTopic"
+    }
+    stages {
+        stage('Create Change-Set') {
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh '''
+                    aws cloudformation create-change-set \
+                      --change-set-name $ChangeSetName \
+                      --stack-name $StackName \
+                      --template-body file://3st-Glue/Infrastructure/Infrastructure.yml \
+                      --region $Region \
+                      --capabilities CAPABILITY_NAMED_IAM \
+                      --parameters \
+                       ParameterKey=BucketName,ParameterValue=$BucketName \
+                       ParameterKey=LambdaSenderName,ParameterValue=$LambdaSenderName \
+                       ParameterKey=LambdaPullerName,ParameterValue=$LambdaPullerName \
+                       ParameterKey=DatabaseName,ParameterValue=$DatabaseName \
+                       ParameterKey=StateMachineName,ParameterValue=$StateMachineName \
+                       ParameterKey=JobName,ParameterValue=$JobName \
+                       ParameterKey=CrawlerName,ParameterValue=$CrawlerName \
+                       ParameterKey=TopicName,ParameterValue=$TopicName \
+                    '''
+                }
+            }
+        }
+        stage('Change-Set create complete'){
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh '''
+                    aws cloudformation wait change-set-create-complete \
+                        --change-set-name $ChangeSetName \
+                        --stack-name $StackName \
+                        --region $Region
+                    '''
+                }
+            }
+        }
+        stage('Execute Change-Set') {
+            steps {
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh '''
+                    aws cloudformation execute-change-set \
+                      --change-set-name $ChangeSetName \
+                      --stack-name $StackName \
+                      --region $Region
+                    '''
+                }
+            }
+        }
+        stage('Stack update complete'){
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                    sh '''
+                        aws cloudformation wait stack-update-complete \
+                            --stack-name $StackName \
+                            --region $Region
+                        '''
+                }
+            }
+        }
+    }
+}

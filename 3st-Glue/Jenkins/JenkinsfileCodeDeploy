@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+        TechnicalBucket = "a-tech-bucket"
+
+        LambdaSenderName = "a-sender"
+        LambdaPullerName = "a-puller"
+
+    }
+    stages {
+        stage('Submit Lambdas Code') {
+            steps {
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh  '''
+                    cd 3st-Glue/LambdaSender && zip -r9 index.zip .
+                    aws s3 cp s3://a-tech-bucket/ChannelList/channels.txt .
+                    zip index.zip channels.txt
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaSenderCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name $LambdaSenderName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
+                      --s3-key LambdaSenderCode/index.zip
+
+                    cd ../..
+                    ls
+
+                    cd 3st-Glue/LambdaPuller
+                    zip -r ../index.zip *
+                    ls
+                    cd ..
+                    zip -r index.zip Commons/*
+                    aws s3 cp s3://a-tech-bucket/Google-API-key/keys.py .
+                    zip index.zip keys.py
+                    aws s3 cp index.zip s3://a-tech-bucket/LambdaPullerCode/index.zip
+                    rm index.zip
+
+                    aws lambda update-function-code \
+                      --function-name $LambdaPullerName\
+                      --region $Region \
+                      --s3-bucket $TechnicalBucket\
+                      --s3-key LambdaPullerCode/index.zip
+                    cd ..
+
+                    ls
+                    cd 3st-Glue
+                    zip -r extra.zip Commons/*
+                    zip -r extra.zip Auxiliary/*
+                    aws s3 cp extra.zip s3://a-tech-bucket/Glue/Extra/extra.zip
+                    rm extra.zip
+                    cd ..
+
+                    ls
+                    cd 3st-Glue
+                    aws s3 cp main.py s3://a-tech-bucket/Glue/Script/main.py
+                '''
+                }
+            }
+        }
+    }
+}

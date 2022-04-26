@@ -1,0 +1,1 @@
+SELECT add_date, id, MAX(commentCount) FROM {temp_view_name} GROUP BY add_date, id

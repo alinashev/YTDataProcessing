@@ -1,0 +1,323 @@
+Parameters:
+  # Bucket
+  BucketName:
+    Description: S3 Bucket name
+    Type: String
+
+  # Lambda Functions:
+  LambdaSenderName:
+    Description: Lambda function name
+    Type: String
+
+  LambdaPullerName:
+    Description: Lambda function name
+    Type: String
+
+  #DataBase:
+  DatabaseName:
+    Description: Database name
+    Type: String
+
+  #State Machine
+  StateMachineName:
+    Description: State Machine name
+    Type: String
+
+  #Glue Job
+  JobName:
+    Description: Glue Job name
+    Type: String
+
+  #Glue Crawler
+  CrawlerName:
+    Description: Crawler name
+    Type: String
+
+  TopicName:
+    Description: Topic name
+    Type: String
+
+Resources:
+  #S3 Bucket:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+
+  #Lambda Functions:
+  LambdaSender:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaSenderName
+      Code:
+        S3Bucket: a-tech-bucket
+        S3Key: Default/index.zip
+      Handler: index.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt RoleLambdaSender.Arn
+      Runtime: python3.9
+      Timeout: 60
+
+  LambdaPuller:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaPullerName
+      Handler: index.lambda_handler
+      Role: !GetAtt RoleLambdaPuller.Arn
+      Code:
+        S3Bucket: a-tech-bucket
+        S3Key: Default/index.zip
+      Environment:
+        Variables:
+          BucketName: !Ref BucketName
+      Timeout: 60
+      MemorySize: 128
+      Runtime: python3.9
+      Layers:
+        - !Ref LayerGoogleAPI
+
+  #Layers:
+  LayerGoogleAPI:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: a-google-api
+      Content:
+        S3Bucket: a-tech-bucket
+        S3Key: Layers/GoogleAPI/python.zip
+      CompatibleArchitectures:
+        - x86_64
+      CompatibleRuntimes:
+        - python3.9
+        - python3.8
+        - python3.7
+        - python3.6
+
+  #Roles:
+  #Roles for Lambda Functions:
+  RoleLambdaSender:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+  RoleLambdaPuller:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+  #Role for StateMachine:
+  RoleStateMachine:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLambdaExecute
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - Fn::Sub: "states.${AWS::Region}.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "lambda:InvokeFunction"
+                Resource:
+                  - !GetAtt LambdaSender.Arn
+                  - !GetAtt LambdaPuller.Arn
+        -
+          PolicyName: LambdaInvokePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "lambda:InvokeAsync"
+                Resource: "*"
+
+  RoleScheduledEvent:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - Fn::Sub: "events.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: StateMachineExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "states:StartExecution"
+                Resource:
+                  - !Ref StateMachine
+  RoleGlueJob:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "*"
+                Resource: "*"
+
+  RoleCrawler:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "*"
+                Resource: "*"
+
+  #Events/Rule:
+  ScheduledEventRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      State: ENABLED
+      ScheduleExpression: rate(1 hour)
+      Targets:
+        - Arn:
+            Fn::GetAtt:
+              - StateMachine
+              - Arn
+          Id: !GetAtt StateMachine.Name
+          RoleArn: !GetAtt RoleScheduledEvent.Arn
+
+  #StateMachine
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Ref StateMachineName
+      RoleArn: !GetAtt RoleStateMachine.Arn
+      DefinitionS3Location:
+        Bucket: a-tech-bucket
+        Key: StateMachines/StateMachineDefinition.json
+
+  #SNS
+  #SNSTopic:
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Ref TopicName
+
+  Subscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: alina.a14d@gmail.com
+      Protocol: email
+      TopicArn: !Ref Topic
+
+  #Glue
+
+  #DataBase:
+  AthenaDataBase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref "AWS::AccountId"
+      DatabaseInput:
+        Name: !Ref DatabaseName
+
+  #Job
+  Job:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Ref JobName
+      Command:
+        Name: glueetl
+        ScriptLocation: "s3://a-tech-bucket/Glue/Script/main.py"
+      ExecutionProperty:
+        MaxConcurrentRuns: 2
+      DefaultArguments:
+        "--extra-py-files": "s3://a-tech-bucket/Glue/Extra/extra.zip"
+      MaxRetries: 0
+      Role: !Ref RoleGlueJob
+      GlueVersion: 3.0
+      NumberOfWorkers: 2
+      Timeout: 5
+      WorkerType: G.1X
+
+  #Crawler
+  Crawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Ref CrawlerName
+      Role: !GetAtt RoleCrawler.Arn
+      DatabaseName: !Ref AthenaDataBase
+      Targets:
+        S3Targets:
+          - Path: "s3://a-data-bucket-1/GlueAggregated"
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+
+

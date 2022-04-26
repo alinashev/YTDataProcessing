@@ -1,0 +1,66 @@
+pipeline
+{
+    agent any
+    environment{
+        Region = "us-east-2"
+        StackName = "a-stack"
+        BucketName = "a-data-bucket-1"
+        LambdaSenderName = "a-sender"
+        LambdaPullerName = "a-puller"
+        DatabaseName = "adb"
+        StateMachineName = "aStateMachine"
+        JobName = "a-job"
+        CrawlerName = "a-aggregated-data"
+        TopicName = "ErrorTopic"
+    }
+    stages
+    {
+        stage('Uploading a StateMachine definition'){
+            steps{
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh  '''
+                    cd 3st-Glue/Orchestration
+                    aws s3 cp StateMachineDefinition.json s3://a-tech-bucket/StateMachines/StateMachineDefinition.json
+                    cd ..
+                '''
+                }
+            }
+        }
+
+        stage('Submit Stack') {
+            steps {
+                withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh '''
+                    aws cloudformation create-stack \
+                      --stack-name $StackName \
+                      --template-body file://3st-Glue/Infrastructure/Infrastructure.yml --region $Region \
+                      --capabilities CAPABILITY_NAMED_IAM \
+                      --parameters \
+                       ParameterKey=BucketName,ParameterValue=$BucketName \
+                       ParameterKey=LambdaSenderName,ParameterValue=$LambdaSenderName \
+                       ParameterKey=LambdaPullerName,ParameterValue=$LambdaPullerName \
+                       ParameterKey=DatabaseName,ParameterValue=$DatabaseName \
+                       ParameterKey=StateMachineName,ParameterValue=$StateMachineName \
+                       ParameterKey=JobName,ParameterValue=$JobName \
+                       ParameterKey=CrawlerName,ParameterValue=$CrawlerName \
+                       ParameterKey=TopicName,ParameterValue=$TopicName \
+                    '''
+                }
+            }
+        }
+        stage('Stack create complete'){
+            steps{
+            withCredentials([aws(accessKeyVariable:'AWS_ACCESS_KEY_ID', credentialsId:'aws-cresds1', secretKeyVariable:'AWS_SECRET_ACCESS_KEY')])
+                {
+                sh '''
+                    aws cloudformation wait stack-create-complete \
+                        --stack-name $StackName \
+                        --region $Region
+                    '''
+                }
+            }
+        }
+    }
+}
