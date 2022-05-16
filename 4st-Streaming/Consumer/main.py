@@ -23,7 +23,7 @@ def main():
 
     kinesis: TransformedDStream = KinesisUtils.createStream(ssc=ssc,
                                                             kinesisAppName='CommentAggregator',
-                                                            streamName='a-test',
+                                                            streamName='a-comments',
                                                             endpointUrl='https://kinesis.us-east-2.amazonaws.com',
                                                             regionName='us-east-2',
                                                             initialPositionInStream=InitialPositionInStream.LATEST,

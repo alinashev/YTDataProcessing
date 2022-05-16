@@ -1,4 +1,4 @@
-from keys import keys
+from Commons.keys import keys
 
 
 class APIkey:
@@ -11,4 +11,4 @@ class APIkey:
                 self.keys_list.remove(current_key)
             return self.keys_list[0]
         else:
-            print("NO LIVE KEYS")
+            print("No valid keys")

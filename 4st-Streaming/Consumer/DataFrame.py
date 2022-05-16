@@ -16,6 +16,8 @@ class DataFrame:
                 param = i.get("param")
                 out_dir = i.get("out_dir")
                 Aggregator.aggregate(df, param, out_dir)
+        else:
+            print("RDD is empty")
 
     def collect(self, json_str) -> str:
         comment_id: dict = {"comment_id": json_str["snippet"]["topLevelComment"]["id"]}
